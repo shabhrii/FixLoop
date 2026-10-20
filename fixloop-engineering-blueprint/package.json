@@ -9,7 +9,7 @@
     "lint": "next lint",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
-    "db:seed": "node --loader ts-node/esm prisma/seed.ts",
+    "db:seed": "npx tsx prisma/seed.ts",
     "test": "vitest run"
   },
   "dependencies": {
