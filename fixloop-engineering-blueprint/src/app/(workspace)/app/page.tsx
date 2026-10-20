@@ -5,7 +5,6 @@ import {
   AlertOctagon,
   CheckSquare,
   ShieldCheck,
-  TrendingDown,
   Clock,
   Plus,
   ArrowRight,
@@ -13,14 +12,15 @@ import {
   AlertTriangle,
   Info,
   CheckCircle2,
+  BookOpen,
 } from "lucide-react";
+import { CaseStatusBadge } from "@/components/cases/case-status-badge";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const user = await getSessionUser();
 
-  // Load tenant metrics safely
   let openCasesCount = 0;
   let criticalCount = 0;
   let investigatingCount = 0;
@@ -79,230 +79,311 @@ export default async function DashboardPage() {
     console.error("Dashboard metric fetch error:", err);
   }
 
-  const SEVERITY_BADGES: Record<string, { label: string; bg: string; icon: any }> = {
-    CRITICAL: { label: "Critical", bg: "bg-red-500/15 text-red-400 border-red-500/30", icon: Flame },
-    HIGH: { label: "High", bg: "bg-orange-500/15 text-orange-400 border-orange-500/30", icon: AlertTriangle },
-    MEDIUM: { label: "Medium", bg: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30", icon: Info },
-    LOW: { label: "Low", bg: "bg-blue-500/15 text-blue-400 border-blue-500/30", icon: CheckCircle2 },
-  };
-
-  const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-    DRAFT: { label: "Draft", color: "bg-slate-800 text-slate-300 border-slate-700" },
-    SUBMITTED: { label: "Submitted", color: "bg-blue-900/40 text-blue-300 border-blue-700" },
-    TRIAGE: { label: "Triage", color: "bg-amber-900/40 text-amber-300 border-amber-700" },
-    INVESTIGATING: { label: "5-Why Investigating", color: "bg-purple-900/40 text-purple-300 border-purple-700" },
-    ACTION_IN_PROGRESS: { label: "Action in Progress", color: "bg-cyan-900/40 text-cyan-300 border-cyan-700" },
-    VERIFICATION_PENDING: { label: "Verification Pending", color: "bg-indigo-900/40 text-indigo-300 border-indigo-700" },
-    CLOSED: { label: "Closed & Verified", color: "bg-emerald-900/40 text-emerald-300 border-emerald-700" },
-    REOPENED: { label: "Reopened", color: "bg-rose-900/40 text-rose-300 border-rose-700" },
-    CANCELLED: { label: "Cancelled", color: "bg-slate-800 text-slate-400 border-slate-700" },
+  const SEVERITY_BADGES: Record<string, { label: string; icon: any; style: React.CSSProperties }> = {
+    CRITICAL: {
+      label: "Critical",
+      style: { backgroundColor: "#FEF2F2", color: "#B42318", borderColor: "#DC2626" },
+      icon: Flame,
+    },
+    HIGH: {
+      label: "High",
+      style: { backgroundColor: "#FFF7ED", color: "#C2570B", borderColor: "#EA580C" },
+      icon: AlertTriangle,
+    },
+    MEDIUM: {
+      label: "Medium",
+      style: { backgroundColor: "#FEFCE8", color: "#8A5700", borderColor: "#CA8A04" },
+      icon: Info,
+    },
+    LOW: {
+      label: "Low",
+      style: { backgroundColor: "#E7EFF7", color: "#245B86", borderColor: "#3E74A8" },
+      icon: CheckCircle2,
+    },
   };
 
   return (
     <div className="space-y-8">
-      {/* Top Welcome Bar */}
+
+      {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-            Operational Quality Dashboard
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight" style={{ color: "var(--fl-text)" }}>
+            Quality Dashboard
           </h1>
-          <p className="mt-1 text-sm text-slate-400">
-            Real-time shop-floor defect containment, active root-cause investigations, and verification gates.
+          <p className="mt-1 text-sm" style={{ color: "var(--fl-text-muted)" }}>
+            Active cases, open corrective actions, and verification queue for your workspace.
           </p>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="shrink-0">
           <Link
             href="/app/cases/new"
-            className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2"
+            id="dashboard-report-defect"
+            className="fl-btn-primary rounded-lg px-4 py-2.5 text-sm"
           >
-            <Plus className="h-4 w-4" />
-            Report New Nonconformance
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            Report nonconformance
           </Link>
         </div>
       </div>
 
-      {/* KPI Cards Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Open Cases */}
-        <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800 backdrop-blur-sm relative overflow-hidden">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-semibold uppercase tracking-wider">
-            <span>Active Cases</span>
-            <AlertOctagon className="h-4 w-4 text-blue-400" />
+      {/* KPI summary cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4" role="region" aria-label="Quality metrics">
+
+        {/* Active cases */}
+        <div
+          className="p-5 rounded-xl"
+          style={{
+            backgroundColor: "var(--fl-surface)",
+            border: "1px solid var(--fl-border)",
+          }}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--fl-text-muted)" }}>
+              Active Cases
+            </span>
+            <AlertOctagon className="h-4 w-4 shrink-0" style={{ color: "var(--fl-blue-700)" }} aria-hidden="true" />
           </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-white tracking-tight">{openCasesCount}</span>
-            <span className="text-xs text-slate-400">nonconformances</span>
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-bold tabular-nums" style={{ color: "var(--fl-text)" }}>
+              {openCasesCount}
+            </span>
+            <span className="text-xs" style={{ color: "var(--fl-text-muted)" }}>open</span>
           </div>
-          <div className="mt-2 text-xs text-slate-400 flex items-center gap-1">
-            <Clock className="h-3.5 w-3.5 text-blue-400" />
-            <span>{investigatingCount} in 5-Why root cause analysis</span>
+          <div className="mt-2 flex items-center gap-1 text-xs" style={{ color: "var(--fl-text-muted)" }}>
+            <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <span>{investigatingCount} in 5-Why analysis</span>
           </div>
         </div>
 
-        {/* Critical Nonconformances */}
-        <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800 backdrop-blur-sm relative overflow-hidden">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-semibold uppercase tracking-wider">
-            <span>Critical Severity</span>
-            <Flame className="h-4 w-4 text-red-400" />
+        {/* Critical severity */}
+        <div
+          className="p-5 rounded-xl"
+          style={{
+            backgroundColor: criticalCount > 0 ? "#FEF2F2" : "var(--fl-surface)",
+            border: `1px solid ${criticalCount > 0 ? "#FECACA" : "var(--fl-border)"}`,
+          }}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--fl-text-muted)" }}>
+              Critical Severity
+            </span>
+            <Flame className="h-4 w-4 shrink-0" style={{ color: "var(--fl-danger)" }} aria-hidden="true" />
           </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-red-400 tracking-tight">{criticalCount}</span>
-            <span className="text-xs text-red-300/80">containment required</span>
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-bold tabular-nums" style={{ color: criticalCount > 0 ? "var(--fl-danger)" : "var(--fl-text)" }}>
+              {criticalCount}
+            </span>
+            <span className="text-xs" style={{ color: "var(--fl-text-muted)" }}>
+              {criticalCount > 0 ? "need attention" : "cases"}
+            </span>
           </div>
-          <div className="mt-2 text-xs text-slate-400">
-            Immediate line quarantine enforced
-          </div>
-        </div>
-
-        {/* Pending Actions */}
-        <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800 backdrop-blur-sm relative overflow-hidden">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-semibold uppercase tracking-wider">
-            <span>Actions In Flight</span>
-            <CheckSquare className="h-4 w-4 text-cyan-400" />
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-white tracking-tight">{pendingActionsCount}</span>
-            <span className="text-xs text-slate-400">open tasks</span>
-          </div>
-          <div className="mt-2 text-xs text-slate-400">
-            Awaiting owner proof uploads
+          <div className="mt-2 text-xs" style={{ color: "var(--fl-text-muted)" }}>
+            Containment required
           </div>
         </div>
 
-        {/* Verification Pending & Closed */}
-        <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800 backdrop-blur-sm relative overflow-hidden">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-semibold uppercase tracking-wider">
-            <span>Verified Closed</span>
-            <ShieldCheck className="h-4 w-4 text-emerald-400" />
+        {/* Actions in flight */}
+        <div
+          className="p-5 rounded-xl"
+          style={{
+            backgroundColor: "var(--fl-surface)",
+            border: "1px solid var(--fl-border)",
+          }}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--fl-text-muted)" }}>
+              Actions In Flight
+            </span>
+            <CheckSquare className="h-4 w-4 shrink-0" style={{ color: "var(--fl-info)" }} aria-hidden="true" />
           </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-emerald-400 tracking-tight">{closedCasesCount}</span>
-            <span className="text-xs text-slate-400">proven fixes</span>
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-bold tabular-nums" style={{ color: "var(--fl-text)" }}>
+              {pendingActionsCount}
+            </span>
+            <span className="text-xs" style={{ color: "var(--fl-text-muted)" }}>open tasks</span>
           </div>
-          <div className="mt-2 text-xs text-slate-400 flex items-center gap-1">
-            <span className="font-semibold text-yellow-400">{pendingVerificationCount}</span> awaiting QE audit
+          <div className="mt-2 text-xs" style={{ color: "var(--fl-text-muted)" }}>
+            Awaiting proof uploads
+          </div>
+        </div>
+
+        {/* Verified closed */}
+        <div
+          className="p-5 rounded-xl"
+          style={{
+            backgroundColor: "var(--fl-surface)",
+            border: "1px solid var(--fl-border)",
+          }}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--fl-text-muted)" }}>
+              Verified Closed
+            </span>
+            <ShieldCheck className="h-4 w-4 shrink-0" style={{ color: "var(--fl-success)" }} aria-hidden="true" />
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-bold tabular-nums" style={{ color: "var(--fl-success)" }}>
+              {closedCasesCount}
+            </span>
+            <span className="text-xs" style={{ color: "var(--fl-text-muted)" }}>proven fixes</span>
+          </div>
+          <div className="mt-2 text-xs" style={{ color: "var(--fl-text-muted)" }}>
+            <span style={{ color: "var(--fl-warning)", fontWeight: 600 }}>{pendingVerificationCount}</span>
+            {" "}awaiting QE review
           </div>
         </div>
       </div>
 
-      {/* Quick Launch & Workflows Section */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      {/* Quick launch cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5" role="region" aria-label="Quick actions">
         <Link
           href="/app/cases"
-          className="p-6 rounded-2xl bg-gradient-to-br from-slate-900/80 to-slate-900/40 border border-slate-800 hover:border-blue-500/40 transition-all group"
+          className="p-6 rounded-xl transition-all group block hover:border-[var(--fl-blue-700)] shadow-sm hover:shadow"
+          style={{
+            backgroundColor: "var(--fl-surface)",
+            border: "1px solid var(--fl-border)",
+          }}
         >
-          <div className="flex items-center justify-between">
-            <div className="p-3 rounded-xl bg-blue-500/10 text-blue-400">
-              <AlertOctagon className="h-6 w-6" />
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-2.5 rounded-lg" style={{ backgroundColor: "var(--fl-blue-050)" }}>
+              <AlertOctagon className="h-5 w-5" style={{ color: "var(--fl-blue-700)" }} aria-hidden="true" />
             </div>
-            <ArrowRight className="h-5 w-5 text-slate-500 group-hover:text-blue-400 group-hover:translate-x-1 transition-all" />
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" style={{ color: "var(--fl-text-muted)" }} aria-hidden="true" />
           </div>
-          <h2 className="mt-4 text-base font-bold text-white">Quality Cases Queue</h2>
-          <p className="mt-1 text-xs text-slate-400">
+          <h2 className="text-base font-bold mb-1" style={{ color: "var(--fl-text)" }}>Quality Cases Queue</h2>
+          <p className="text-sm" style={{ color: "var(--fl-text-muted)" }}>
             Filter, triage, and investigate shop-floor defect reports through structured state transitions.
           </p>
         </Link>
 
         <Link
           href="/app/actions"
-          className="p-6 rounded-2xl bg-gradient-to-br from-slate-900/80 to-slate-900/40 border border-slate-800 hover:border-cyan-500/40 transition-all group"
+          className="p-6 rounded-xl transition-all group block hover:border-[var(--fl-blue-700)] shadow-sm hover:shadow"
+          style={{
+            backgroundColor: "var(--fl-surface)",
+            border: "1px solid var(--fl-border)",
+          }}
         >
-          <div className="flex items-center justify-between">
-            <div className="p-3 rounded-xl bg-cyan-500/10 text-cyan-400">
-              <CheckSquare className="h-6 w-6" />
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-2.5 rounded-lg" style={{ backgroundColor: "#ECFDF5" }}>
+              <CheckSquare className="h-5 w-5" style={{ color: "var(--fl-success)" }} aria-hidden="true" />
             </div>
-            <ArrowRight className="h-5 w-5 text-slate-500 group-hover:text-cyan-400 group-hover:translate-x-1 transition-all" />
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" style={{ color: "var(--fl-text-muted)" }} aria-hidden="true" />
           </div>
-          <h2 className="mt-4 text-base font-bold text-white">Corrective Actions</h2>
-          <p className="mt-1 text-xs text-slate-400">
-            Assign containment and corrective tasks. Upload proof artifacts before marking complete.
+          <h2 className="text-base font-bold mb-1" style={{ color: "var(--fl-text)" }}>Corrective Actions</h2>
+          <p className="text-sm" style={{ color: "var(--fl-text-muted)" }}>
+            Assign and track corrective tasks. Upload proof artifacts before marking complete.
           </p>
         </Link>
 
         <Link
           href="/app/library"
-          className="p-6 rounded-2xl bg-gradient-to-br from-slate-900/80 to-slate-900/40 border border-slate-800 hover:border-purple-500/40 transition-all group"
+          className="p-6 rounded-xl transition-all group block hover:border-[var(--fl-blue-700)] shadow-sm hover:shadow"
+          style={{
+            backgroundColor: "var(--fl-surface)",
+            border: "1px solid var(--fl-border)",
+          }}
         >
-          <div className="flex items-center justify-between">
-            <div className="p-3 rounded-xl bg-purple-500/10 text-purple-400">
-              <ShieldCheck className="h-6 w-6" />
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-2.5 rounded-lg" style={{ backgroundColor: "var(--fl-blue-050)" }}>
+              <BookOpen className="h-5 w-5" style={{ color: "var(--fl-blue-700)" }} aria-hidden="true" />
             </div>
-            <ArrowRight className="h-5 w-5 text-slate-500 group-hover:text-purple-400 group-hover:translate-x-1 transition-all" />
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" style={{ color: "var(--fl-text-muted)" }} aria-hidden="true" />
           </div>
-          <h2 className="mt-4 text-base font-bold text-white">Closed Knowledge Base</h2>
-          <p className="mt-1 text-xs text-slate-400">
+          <h2 className="text-base font-bold mb-1" style={{ color: "var(--fl-text)" }}>Closed Knowledge Base</h2>
+          <p className="text-sm" style={{ color: "var(--fl-text-muted)" }}>
             Search verified historical root causes and solutions across part numbers and operations.
           </p>
         </Link>
       </div>
 
-      {/* Recent Cases Stream */}
-      <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 backdrop-blur-sm">
-        <div className="flex items-center justify-between mb-5">
+      {/* Recent cases */}
+      <div
+        className="rounded-xl overflow-hidden"
+        style={{
+          backgroundColor: "var(--fl-surface)",
+          border: "1px solid var(--fl-border)",
+        }}
+      >
+        <div
+          className="px-6 py-4 flex items-center justify-between"
+          style={{ borderBottom: "1px solid var(--fl-border)" }}
+        >
           <div>
-            <h2 className="text-base font-bold text-white">Recent Quality Cases</h2>
-            <p className="text-xs text-slate-400">Latest nonconformances logged across active factory sites</p>
+            <h2 className="text-base font-bold" style={{ color: "var(--fl-text)" }}>Recent Quality Cases</h2>
+            <p className="text-xs mt-0.5" style={{ color: "var(--fl-text-muted)" }}>
+              Latest nonconformances across active factory sites
+            </p>
           </div>
           <Link
             href="/app/cases"
-            className="text-xs font-semibold text-blue-400 hover:text-blue-300 flex items-center gap-1"
+            className="text-xs font-semibold flex items-center gap-1 transition-colors"
+            style={{ color: "var(--fl-blue-700)" }}
           >
-            View All Cases
-            <ArrowRight className="h-3.5 w-3.5" />
+            View all
+            <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
           </Link>
         </div>
 
         {recentCases.length === 0 ? (
-          <div className="py-12 text-center text-slate-500">
-            <AlertOctagon className="h-8 w-8 mx-auto mb-2 text-slate-600" />
-            <p className="text-sm font-medium">No cases found in this workspace yet.</p>
+          <div className="py-14 text-center">
+            <AlertOctagon className="h-8 w-8 mx-auto mb-3" style={{ color: "var(--fl-border)" }} aria-hidden="true" />
+            <p className="text-sm font-medium" style={{ color: "var(--fl-text-muted)" }}>
+              No cases in this workspace yet.
+            </p>
             <Link
               href="/app/cases/new"
-              className="mt-3 inline-flex items-center gap-1.5 text-xs text-blue-400 hover:underline"
+              className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold"
+              style={{ color: "var(--fl-blue-700)" }}
             >
-              <Plus className="h-3.5 w-3.5" /> Report the first nonconformance
+              <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+              Report the first nonconformance
             </Link>
           </div>
         ) : (
-          <div className="divide-y divide-slate-800/80">
-            {recentCases.map((qc) => {
+          <div>
+            {recentCases.map((qc, index) => {
               const sev = SEVERITY_BADGES[qc.severity] || SEVERITY_BADGES.MEDIUM;
               const SevIcon = sev.icon;
-              const status = STATUS_LABELS[qc.status] || { label: qc.status, color: "bg-slate-800 text-slate-300" };
 
               return (
                 <Link
                   key={qc.id}
                   href={`/app/cases/${qc.id}`}
-                  className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-800/40 px-3 -mx-3 rounded-xl transition-colors group"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-6 py-4 transition-colors group hover:bg-[var(--fl-blue-050)]"
+                  style={{
+                    borderTop: index > 0 ? "1px solid var(--fl-border)" : undefined,
+                  }}
                 >
                   <div className="flex items-start sm:items-center gap-3">
-                    <span className="font-mono text-xs font-bold text-blue-400 shrink-0">
+                    <span className="font-mono text-xs font-bold tabular-nums" style={{ color: "var(--fl-blue-700)" }}>
                       {qc.caseNumber}
                     </span>
                     <div>
-                      <h3 className="text-sm font-semibold text-white group-hover:text-blue-300 transition-colors">
+                      <h3 className="text-sm font-semibold" style={{ color: "var(--fl-text)" }}>
                         {qc.title}
                       </h3>
-                      <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-slate-400">
+                      <div className="flex flex-wrap items-center gap-2 mt-0.5 text-xs" style={{ color: "var(--fl-text-muted)" }}>
                         <span>{qc.site?.name}</span>
-                        <span>•</span>
+                        <span aria-hidden="true">·</span>
                         <span>Part: {qc.partNumber || "N/A"}</span>
-                        <span>•</span>
-                        <span>Reported by {qc.reportedBy?.displayName || qc.reportedBy?.email}</span>
+                        <span aria-hidden="true">·</span>
+                        <span>By {qc.reportedBy?.displayName || qc.reportedBy?.email}</span>
                       </div>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border text-[11px] font-medium font-mono ${sev.bg}`}>
-                      <SevIcon className="h-3 w-3" />
+                    <span
+                      className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border text-[11px] font-semibold font-mono"
+                      style={sev.style}
+                    >
+                      <SevIcon className="h-3 w-3 shrink-0" aria-hidden="true" />
                       {sev.label}
                     </span>
-                    <span className={`px-2.5 py-0.5 rounded-full border text-[11px] font-medium font-mono ${status.color}`}>
-                      {status.label}
-                    </span>
+                    <CaseStatusBadge status={qc.status} size="sm" />
                   </div>
                 </Link>
               );

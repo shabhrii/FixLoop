@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Upload, Camera, FileText, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { Upload, Camera, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { EvidenceType } from "@prisma/client";
 
 interface EvidenceUploaderProps {
@@ -50,12 +50,29 @@ export function EvidenceUploader({
       return;
     }
 
+    // Determine and validate MIME type
+    let resolvedFileType = file.type;
+    if (!resolvedFileType) {
+      const ext = file.name.split(".").pop()?.toLowerCase();
+      if (ext === "jpg" || ext === "jpeg") resolvedFileType = "image/jpeg";
+      else if (ext === "png") resolvedFileType = "image/png";
+      else if (ext === "webp") resolvedFileType = "image/webp";
+      else if (ext === "pdf") resolvedFileType = "application/pdf";
+      else if (ext === "csv") resolvedFileType = "text/csv";
+    }
+
+    const ALLOWED_MIME = ["image/jpeg", "image/png", "image/webp", "application/pdf", "text/csv"];
+    if (!ALLOWED_MIME.includes(resolvedFileType)) {
+      setErrorMessage("Unsupported file type. Please upload a JPEG, PNG, WebP image, PDF, or CSV.");
+      return;
+    }
+
     setIsUploading(true);
     setErrorMessage(null);
     setSuccessMessage(null);
 
     try {
-      // Step 1: Request upload intent
+      // Step 1: Request upload intent with schema-compliant field names
       setUploadProgress("Initiating secure upload intent...");
       const intentRes = await fetch(
         `/api/v1/tenants/${tenantId}/cases/${caseId}/evidence/upload-intents`,
@@ -63,9 +80,9 @@ export function EvidenceUploader({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            filename: file.name,
-            contentType: file.type || "application/octet-stream",
-            sizeBytes: file.size,
+            fileName: file.name,
+            fileType: resolvedFileType,
+            fileSize: file.size,
             evidenceType,
             caption: caption.trim() || undefined,
           }),
@@ -77,7 +94,11 @@ export function EvidenceUploader({
         throw new Error(intentData.error?.message || "Failed to initialize upload intent");
       }
 
-      const { evidenceId, uploadUrl } = intentData;
+      const evidenceId = intentData.evidence?.id || intentData.evidenceId;
+      const uploadUrl = intentData.uploadUrl;
+      if (!evidenceId || !uploadUrl) {
+        throw new Error("Invalid response from upload service");
+      }
 
       // Step 2: Transfer raw file bytes
       setUploadProgress("Transferring tamper-resistant evidence bytes...");
@@ -85,7 +106,7 @@ export function EvidenceUploader({
 
       const transferRes = await fetch(uploadUrl, {
         method: "PUT",
-        headers: { "Content-Type": file.type || "application/octet-stream" },
+        headers: { "Content-Type": resolvedFileType },
         body: arrayBuffer,
       });
 
@@ -100,10 +121,7 @@ export function EvidenceUploader({
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            actualSizeBytes: file.size,
-            actualMimeType: file.type || "application/octet-stream",
-          }),
+          body: JSON.stringify({}),
         }
       );
 
@@ -126,27 +144,27 @@ export function EvidenceUploader({
   };
 
   return (
-    <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800 backdrop-blur-sm">
-      <div className="flex items-center gap-2 mb-3">
-        <Camera className="h-4 w-4 text-blue-400" />
-        <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+    <div className="p-5 rounded-2xl bg-white border border-[#D8E0E9] shadow-sm">
+      <div className="flex items-center gap-2 mb-2">
+        <Camera className="h-4 w-4 text-[#2F5F91]" />
+        <h3 className="text-sm font-bold text-[#17212F] uppercase tracking-wider">
           Upload Physical Evidence
         </h3>
       </div>
-      <p className="text-xs text-slate-400 mb-4">
+      <p className="text-xs text-[#526173] mb-4">
         Attach tamper-evident defect photos, CMM measurements, or action completion proofs.
       </p>
 
       {errorMessage && (
-        <div className="mb-4 p-3 rounded-xl bg-red-950/60 border border-red-700/60 flex items-center gap-2 text-xs text-red-300">
-          <AlertCircle className="h-4 w-4 shrink-0 text-red-400" />
+        <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 flex items-center gap-2 text-xs text-[#B42318]">
+          <AlertCircle className="h-4 w-4 shrink-0 text-[#B42318]" />
           <span>{errorMessage}</span>
         </div>
       )}
 
       {successMessage && (
-        <div className="mb-4 p-3 rounded-xl bg-emerald-950/60 border border-emerald-700/60 flex items-center gap-2 text-xs text-emerald-300">
-          <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
+        <div className="mb-4 p-3 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center gap-2 text-xs text-[#216E4A]">
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-[#216E4A]" />
           <span>{successMessage}</span>
         </div>
       )}
@@ -154,14 +172,14 @@ export function EvidenceUploader({
       <form onSubmit={handleUpload} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+            <label className="block text-[11px] font-semibold text-[#526173] uppercase tracking-wider mb-1">
               Evidence Type
             </label>
             <select
               value={evidenceType}
               onChange={(e) => setEvidenceType(e.target.value as EvidenceType)}
               disabled={isUploading}
-              className="w-full px-3 py-2 rounded-xl bg-slate-950/80 border border-slate-800 text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 rounded-xl bg-white border border-[#D8E0E9] text-xs text-[#17212F] focus:outline-none focus:ring-2 focus:ring-[#2F5F91]"
             >
               {allowedTypes.map((type) => (
                 <option key={type} value={type}>
@@ -172,7 +190,7 @@ export function EvidenceUploader({
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+            <label className="block text-[11px] font-semibold text-[#526173] uppercase tracking-wider mb-1">
               Caption / Measurement Note
             </label>
             <input
@@ -181,13 +199,13 @@ export function EvidenceUploader({
               onChange={(e) => setCaption(e.target.value)}
               placeholder="e.g. Bore depth at spindle 2"
               disabled={isUploading}
-              className="w-full px-3 py-2 rounded-xl bg-slate-950/80 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 rounded-xl bg-white border border-[#D8E0E9] text-xs text-[#17212F] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#2F5F91]"
             />
           </div>
         </div>
 
         {/* File Select Area */}
-        <div className="border-2 border-dashed border-slate-800 hover:border-slate-700 rounded-xl p-4 text-center bg-slate-950/40 transition-colors">
+        <div className="border-2 border-dashed border-[#D8E0E9] hover:border-[#2F5F91] rounded-xl p-4 text-center bg-[#F7F9FC] transition-colors">
           <input
             ref={fileInputRef}
             type="file"
@@ -201,10 +219,10 @@ export function EvidenceUploader({
             className="cursor-pointer flex flex-col items-center justify-center gap-1.5"
           >
             <Upload className="h-6 w-6 text-slate-400 mb-1" />
-            <span className="text-xs font-semibold text-blue-400 hover:text-blue-300">
+            <span className="text-xs font-semibold text-[#2F5F91] hover:text-[#214B78]">
               {file ? file.name : "Click to select photo or test document"}
             </span>
-            <span className="text-[10px] text-slate-500">
+            <span className="text-[10px] text-[#526173]">
               {file
                 ? `${(file.size / 1024).toFixed(1)} KB`
                 : "PNG, JPG, PDF, CSV, TXT up to 15MB"}
@@ -213,8 +231,8 @@ export function EvidenceUploader({
         </div>
 
         {isUploading && (
-          <div className="p-3 rounded-xl bg-blue-950/40 border border-blue-800/40 flex items-center gap-2.5 text-xs text-blue-300">
-            <Loader2 className="h-4 w-4 animate-spin text-blue-400 shrink-0" />
+          <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 flex items-center gap-2.5 text-xs text-[#2F5F91]">
+            <Loader2 className="h-4 w-4 animate-spin text-[#2F5F91] shrink-0" />
             <span>{uploadProgress}</span>
           </div>
         )}
@@ -222,7 +240,7 @@ export function EvidenceUploader({
         <button
           type="submit"
           disabled={!file || isUploading}
-          className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-semibold text-xs transition-all shadow-md shadow-blue-500/20 flex items-center justify-center gap-2"
+          className="w-full py-2.5 px-4 rounded-xl bg-[#2F5F91] hover:bg-[#214B78] disabled:opacity-50 text-white font-semibold text-xs transition-all shadow-sm flex items-center justify-center gap-2"
         >
           {isUploading ? (
             <>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Download, FileText, CheckCircle2, AlertCircle, Loader2, Shield } from "lucide-react";
+import { Download, AlertCircle, Loader2, Shield } from "lucide-react";
 
 interface ReportExportButtonProps {
   tenantId: string;
@@ -10,14 +10,12 @@ interface ReportExportButtonProps {
 
 export function ReportExportButton({ tenantId, caseId }: ReportExportButtonProps) {
   const [isGenerating, setIsGenerating] = useState(false);
-  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [checksum, setChecksum] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleGenerate = async () => {
     setIsGenerating(true);
     setErrorMessage(null);
-    setDownloadUrl(null);
     setChecksum(null);
 
     const idempotencyKey = `report-${caseId}-${Date.now()}`;
@@ -40,7 +38,6 @@ export function ReportExportButton({ tenantId, caseId }: ReportExportButtonProps
       const dlData = await dlRes.json();
       if (!dlRes.ok) throw new Error(dlData.error?.message || "Failed to retrieve download capability");
 
-      setDownloadUrl(dlData.downloadUrl);
       setChecksum(dlData.checksum);
 
       // Automatically trigger download
@@ -53,37 +50,37 @@ export function ReportExportButton({ tenantId, caseId }: ReportExportButtonProps
   };
 
   return (
-    <div className="space-y-2">
+    <div className="inline-flex flex-wrap items-center gap-2">
       <button
         onClick={handleGenerate}
         disabled={isGenerating}
-        className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-all flex items-center gap-2 shadow-sm disabled:opacity-50"
+        className="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-[#17212F] text-xs font-semibold border border-[#D8E0E9] transition-all flex items-center gap-2 shadow-sm disabled:opacity-50"
       >
         {isGenerating ? (
           <>
-            <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-400" />
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-[#2F5F91]" />
             Generating Audit Snapshot...
           </>
         ) : (
           <>
-            <Download className="h-3.5 w-3.5 text-blue-400" />
+            <Download className="h-3.5 w-3.5 text-[#2F5F91]" />
             Export Tamper-Evident Report
           </>
         )}
       </button>
 
       {checksum && (
-        <div className="text-[10px] font-mono text-emerald-400 flex items-center gap-1">
+        <span className="text-[10px] font-mono text-[#216E4A] flex items-center gap-1 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-200">
           <Shield className="h-3 w-3" />
-          <span>SHA-256: {checksum.substring(0, 16)}...</span>
-        </div>
+          <span>SHA-256: {checksum.substring(0, 12)}...</span>
+        </span>
       )}
 
       {errorMessage && (
-        <div className="text-[11px] text-red-400 flex items-center gap-1">
+        <span className="text-[11px] text-[#B42318] flex items-center gap-1 bg-red-50 px-2 py-1 rounded-md border border-red-200">
           <AlertCircle className="h-3 w-3 shrink-0" />
           <span>{errorMessage}</span>
-        </div>
+        </span>
       )}
     </div>
   );

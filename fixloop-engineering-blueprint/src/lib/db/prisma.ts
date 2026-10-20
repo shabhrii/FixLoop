@@ -4,6 +4,13 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
+// Polyfill BigInt serialization to prevent JSON.stringify crashes
+if (typeof BigInt !== "undefined" && !(BigInt.prototype as any).toJSON) {
+  (BigInt.prototype as any).toJSON = function () {
+    return Number(this);
+  };
+}
+
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({

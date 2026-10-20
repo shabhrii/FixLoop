@@ -17,71 +17,93 @@ interface CaseStatusBadgeProps {
   size?: "sm" | "md";
 }
 
+/**
+ * STATUS_CONFIG uses light-theme design tokens from design.md §3.
+ * Each status is identifiable by text label + icon, not color alone (§3 color rules, §10 accessibility).
+ */
 const STATUS_CONFIG: Record<
   CaseStatus,
-  { label: string; bg: string; icon: any; border: string; text: string }
+  { label: string; style: React.CSSProperties; icon: any }
 > = {
   DRAFT: {
     label: "Draft",
-    bg: "bg-slate-800/80",
-    border: "border-slate-700",
-    text: "text-slate-300",
+    style: {
+      backgroundColor: "#F7F9FC",
+      color: "#526173",
+      borderColor: "#D8E0E9",
+    },
     icon: FileEdit,
   },
   SUBMITTED: {
     label: "Submitted",
-    bg: "bg-blue-950/60",
-    border: "border-blue-700/60",
-    text: "text-blue-300",
+    style: {
+      backgroundColor: "#E7EFF7",
+      color: "#245B86",
+      borderColor: "#3E74A8",
+    },
     icon: Send,
   },
   TRIAGE: {
     label: "Triage",
-    bg: "bg-amber-950/60",
-    border: "border-amber-700/60",
-    text: "text-amber-300",
+    style: {
+      backgroundColor: "#FEF3C7",
+      color: "#8A5700",
+      borderColor: "#D97706",
+    },
     icon: AlertTriangle,
   },
   INVESTIGATING: {
     label: "5-Why Investigating",
-    bg: "bg-purple-950/60",
-    border: "border-purple-700/60",
-    text: "text-purple-300",
+    style: {
+      backgroundColor: "#EDE9FE",
+      color: "#5B21B6",
+      borderColor: "#7C3AED",
+    },
     icon: GitBranch,
   },
   ACTION_IN_PROGRESS: {
     label: "Action in Progress",
-    bg: "bg-cyan-950/60",
-    border: "border-cyan-700/60",
-    text: "text-cyan-300",
+    style: {
+      backgroundColor: "#ECFDF5",
+      color: "#065F46",
+      borderColor: "#059669",
+    },
     icon: PlayCircle,
   },
   VERIFICATION_PENDING: {
     label: "Verification Pending",
-    bg: "bg-indigo-950/60",
-    border: "border-indigo-700/60",
-    text: "text-indigo-300",
+    style: {
+      backgroundColor: "#E0E7FF",
+      color: "#3730A3",
+      borderColor: "#4F46E5",
+    },
     icon: Clock,
   },
   CLOSED: {
     label: "Closed & Verified",
-    bg: "bg-emerald-950/60",
-    border: "border-emerald-700/60",
-    text: "text-emerald-300",
+    style: {
+      backgroundColor: "#DCFCE7",
+      color: "#216E4A",
+      borderColor: "#16A34A",
+    },
     icon: CheckCircle2,
   },
   REOPENED: {
     label: "Reopened",
-    bg: "bg-rose-950/60",
-    border: "border-rose-700/60",
-    text: "text-rose-300",
+    style: {
+      backgroundColor: "#FEF2F2",
+      color: "#B42318",
+      borderColor: "#DC2626",
+    },
     icon: RefreshCcw,
   },
   CANCELLED: {
     label: "Cancelled",
-    bg: "bg-slate-900/60",
-    border: "border-slate-800",
-    text: "text-slate-500",
+    style: {
+      backgroundColor: "#F7F9FC",
+      color: "#526173",
+      borderColor: "#D8E0E9",
+    },
     icon: XCircle,
   },
 };
@@ -92,14 +114,15 @@ export function CaseStatusBadge({ status, className = "", size = "md" }: CaseSta
 
   const sizeClasses =
     size === "sm"
-      ? "px-2 py-0.5 text-[10px] gap-1"
-      : "px-2.5 py-1 text-xs gap-1.5";
+      ? "px-2.5 py-0.5 text-[11px] gap-1.5 leading-normal"
+      : "px-3 py-1 text-xs gap-2 leading-normal";
 
   return (
     <span
-      className={`inline-flex items-center font-mono font-medium rounded-full border ${config.bg} ${config.border} ${config.text} ${sizeClasses} ${className}`}
+      className={`inline-flex items-center font-mono font-semibold rounded-full border whitespace-nowrap ${sizeClasses} ${className}`}
+      style={config.style}
     >
-      <Icon className={size === "sm" ? "h-3 w-3 shrink-0" : "h-3.5 w-3.5 shrink-0"} />
+      <Icon className={size === "sm" ? "h-3 w-3 shrink-0" : "h-3.5 w-3.5 shrink-0"} aria-hidden="true" />
       <span>{config.label}</span>
     </span>
   );

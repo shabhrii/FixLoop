@@ -93,8 +93,11 @@ export const CaseService = {
   async getCase(ctx: TenantContext, caseId: string) {
     const qc = await prisma.qualityCase.findFirst({
       where: {
-        id: caseId,
         tenantId: ctx.tenantId,
+        OR: [
+          { id: caseId },
+          { caseNumber: caseId },
+        ],
       },
       include: {
         site: true,

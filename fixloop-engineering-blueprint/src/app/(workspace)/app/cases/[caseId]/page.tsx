@@ -8,8 +8,7 @@ import { CaseStatusBadge } from "@/components/cases/case-status-badge";
 import { FiveWhyEditor } from "@/components/cases/five-why-editor";
 import { FindingEditor } from "@/components/cases/finding-editor";
 import { AiSuggestionPanel } from "@/components/cases/ai-suggestion-panel";
-import { ActionCard } from "@/components/actions/action-card";
-import { ActionEditor } from "@/components/actions/action-editor";
+import { CaseActionsSection } from "@/components/actions/case-actions-section";
 import { EvidenceUploader } from "@/components/cases/evidence-uploader";
 import { AuditTimeline } from "@/components/cases/audit-timeline";
 import { CaseActionBar } from "@/components/cases/case-action-bar";
@@ -43,12 +42,12 @@ interface CaseDetailPageProps {
 
 const SEVERITY_CONFIG: Record<
   Severity,
-  { label: string; bg: string; icon: any; border: string; text: string }
+  { label: string; style: React.CSSProperties; icon: any }
 > = {
-  CRITICAL: { label: "Critical", bg: "bg-red-950/60", border: "border-red-700/60", text: "text-red-400", icon: Flame },
-  HIGH: { label: "High", bg: "bg-orange-950/60", border: "border-orange-700/60", text: "text-orange-400", icon: AlertTriangle },
-  MEDIUM: { label: "Medium", bg: "bg-yellow-950/60", border: "border-yellow-700/60", text: "text-yellow-400", icon: Info },
-  LOW: { label: "Low", bg: "bg-blue-950/60", border: "border-blue-700/60", text: "text-blue-400", icon: CheckCircle2 },
+  CRITICAL: { label: "Critical", style: { backgroundColor: "#FEF2F2", color: "#B42318", borderColor: "#DC2626" }, icon: Flame },
+  HIGH:     { label: "High",     style: { backgroundColor: "#FFF7ED", color: "#C2570B", borderColor: "#EA580C" }, icon: AlertTriangle },
+  MEDIUM:   { label: "Medium",   style: { backgroundColor: "#FEFCE8", color: "#8A5700", borderColor: "#CA8A04" }, icon: Info },
+  LOW:      { label: "Low",      style: { backgroundColor: "#E7EFF7", color: "#245B86", borderColor: "#3E74A8" }, icon: CheckCircle2 },
 };
 
 export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
@@ -103,7 +102,7 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
     .filter((e: any) => e.status === "AVAILABLE")
     .map((e: any) => ({
       id: e.id,
-      originalFilename: e.originalFilename,
+      originalFilename: e.originalFileName || e.originalFilename || "Evidence File",
       caption: e.caption,
     }));
 
@@ -115,77 +114,80 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
 
   return (
     <div className="space-y-8">
-      {/* Back button & Breadcrumb */}
-      <div className="flex items-center gap-2 text-xs text-slate-400">
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-2 text-xs" aria-label="Breadcrumb">
         <Link
           href="/app/cases"
-          className="hover:text-white flex items-center gap-1 transition-colors"
+          className="flex items-center gap-1 transition-colors"
+          style={{ color: "var(--fl-blue-700)" }}
         >
-          <ArrowLeft className="h-3.5 w-3.5" />
+          <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
           Cases Queue
         </Link>
-        <span>/</span>
-        <span className="font-mono text-slate-300 font-semibold">{qc.caseNumber}</span>
-      </div>
+        <span aria-hidden="true" style={{ color: "var(--fl-text-muted)" }}>/</span>
+        <span className="font-mono font-semibold" style={{ color: "var(--fl-text)" }}>{qc.caseNumber}</span>
+      </nav>
 
       {/* Case Header Card */}
-      <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-sm shadow-xl space-y-4">
+      <div
+        className="p-6 rounded-xl space-y-4"
+        style={{ backgroundColor: "var(--fl-surface)", border: "1px solid var(--fl-border)" }}
+      >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2.5">
-            <span className="font-mono text-base font-extrabold text-blue-400">
+            <span className="font-mono text-base font-bold tabular-nums" style={{ color: "var(--fl-blue-700)" }}>
               {qc.caseNumber}
             </span>
-            <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-400">
+            <span
+              className="text-[11px] font-mono px-2 py-0.5 rounded-full"
+              style={{ backgroundColor: "var(--fl-surface-muted)", color: "var(--fl-text-muted)", border: "1px solid var(--fl-border)" }}
+            >
               v{qc.version}
             </span>
             <span
-              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border text-[11px] font-medium font-mono ${sev.bg} ${sev.border} ${sev.text}`}
+              className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border text-[11px] font-semibold font-mono"
+              style={sev.style}
             >
-              <SevIcon className="h-3 w-3" />
+              <SevIcon className="h-3 w-3" aria-hidden="true" />
               {sev.label}
             </span>
             <CaseStatusBadge status={qc.status} size="sm" />
           </div>
 
-          <div className="text-xs text-slate-400 font-mono flex items-center gap-1">
-            <Calendar className="h-3.5 w-3.5" />
+          <div className="text-xs font-mono flex items-center gap-1" style={{ color: "var(--fl-text-muted)" }}>
+            <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
             Reported {new Date(qc.createdAt).toLocaleDateString()}
           </div>
         </div>
 
-        <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight" style={{ color: "var(--fl-text)" }}>
           {qc.title}
         </h1>
 
-        <p className="text-sm text-slate-300 leading-relaxed max-w-4xl">
+        <p className="text-sm leading-relaxed max-w-4xl" style={{ color: "var(--fl-text-muted)" }}>
           {qc.description}
         </p>
 
         {/* Manufacturing Metadata Bar */}
-        <div className="pt-4 border-t border-slate-800 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+        <div
+          className="pt-4 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs"
+          style={{ borderTop: "1px solid var(--fl-border)" }}
+        >
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block font-mono">
-              Site / Facility
-            </span>
-            <span className="font-semibold text-white mt-0.5 block">{qc.site?.name}</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider block" style={{ color: "var(--fl-text-muted)" }}>Site / Facility</span>
+            <span className="font-semibold mt-0.5 block" style={{ color: "var(--fl-text)" }}>{qc.site?.name}</span>
           </div>
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block font-mono">
-              Part Number
-            </span>
-            <span className="font-semibold text-white mt-0.5 block font-mono">{qc.partNumber || "N/A"}</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider block" style={{ color: "var(--fl-text-muted)" }}>Part Number</span>
+            <span className="font-semibold font-mono mt-0.5 block tabular-nums" style={{ color: "var(--fl-text)" }}>{qc.partNumber || "N/A"}</span>
           </div>
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block font-mono">
-              Machine / Cell
-            </span>
-            <span className="font-semibold text-white mt-0.5 block font-mono">{qc.machineId || "N/A"}</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider block" style={{ color: "var(--fl-text-muted)" }}>Machine / Cell</span>
+            <span className="font-semibold font-mono mt-0.5 block" style={{ color: "var(--fl-text)" }}>{qc.machineId || "N/A"}</span>
           </div>
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block font-mono">
-              Reported By
-            </span>
-            <span className="font-semibold text-white mt-0.5 block">
+            <span className="text-[10px] font-bold uppercase tracking-wider block" style={{ color: "var(--fl-text-muted)" }}>Reported By</span>
+            <span className="font-semibold mt-0.5 block" style={{ color: "var(--fl-text)" }}>
               {qc.reportedBy?.displayName || qc.reportedBy?.email}
             </span>
           </div>
@@ -193,19 +195,22 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
 
         {/* Tolerance Deviation Bar if present */}
         {(qc.observedValue != null || qc.specification) && (
-          <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 flex flex-wrap items-center gap-6 text-xs font-mono">
+          <div
+            className="p-3.5 rounded-lg flex flex-wrap items-center gap-6 text-xs font-mono"
+            style={{ backgroundColor: "var(--fl-surface-muted)", border: "1px solid var(--fl-border)" }}
+          >
             <div>
-              <span className="text-slate-500">Observed:</span>{" "}
-              <strong className="text-red-400">{qc.observedValue} {qc.unit}</strong>
+              <span style={{ color: "var(--fl-text-muted)" }}>Observed:</span>{" "}
+              <strong style={{ color: "var(--fl-danger)" }}>{qc.observedValue} {qc.unit}</strong>
             </div>
             <div>
-              <span className="text-slate-500">Specification:</span>{" "}
-              <strong className="text-slate-200">{qc.specification}</strong>
+              <span style={{ color: "var(--fl-text-muted)" }}>Specification:</span>{" "}
+              <strong style={{ color: "var(--fl-text)" }}>{qc.specification}</strong>
             </div>
             {qc.quantityInspected != null && (
               <div>
-                <span className="text-slate-500">Defect Ratio:</span>{" "}
-                <strong className="text-yellow-400">
+                <span style={{ color: "var(--fl-text-muted)" }}>Defect Ratio:</span>{" "}
+                <strong style={{ color: "var(--fl-warning)" }}>
                   {qc.quantityAffected} / {qc.quantityInspected} units
                 </strong>
               </div>
@@ -214,7 +219,7 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
         )}
 
         {/* State Action Bar (Triage / Close / Export) */}
-        <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
+        <div className="pt-4 flex items-center justify-between" style={{ borderTop: "1px solid var(--fl-border)" }}>
           <CaseActionBar
             tenantId={membership.tenantId}
             caseId={qc.id}
@@ -258,43 +263,16 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
             canRequest={isQE}
           />
 
-          {/* Corrective Actions Section */}
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 backdrop-blur-sm space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-400">
-                  <CheckCircle2 className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-white tracking-tight">
-                    Corrective & Containment Actions
-                  </h3>
-                  <p className="text-xs text-slate-400">
-                    Tasks required to isolate the failure and prevent defect recurrence.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              {qc.actions.length === 0 ? (
-                <div className="py-8 text-center text-xs text-slate-500">
-                  No corrective actions assigned yet.
-                </div>
-              ) : (
-                qc.actions.map((action: any) => (
-                  <ActionCard
-                    key={action.id}
-                    tenantId={membership.tenantId}
-                    caseId={qc.id}
-                    action={action}
-                    availableEvidence={evidenceOptions}
-                    isCurrentAssigneeOrQE={isQE || action.assigneeId === user.id}
-                  />
-                ))
-              )}
-            </div>
-          </div>
+          {/* Corrective Actions Section with Task Assignment */}
+          <CaseActionsSection
+            tenantId={membership.tenantId}
+            caseId={qc.id}
+            actions={qc.actions}
+            availableEvidence={evidenceOptions}
+            assignees={memberOptions}
+            isQualityEngineer={isQE}
+            currentUserId={user.id}
+          />
 
           {/* Verification & Effectiveness Section */}
           <div className="space-y-4">
@@ -307,37 +285,50 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
             )}
 
             {qc.effectivenessChecks.length > 0 && (
-              <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 backdrop-blur-sm space-y-3">
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-2">
+              <div
+                className="p-6 rounded-xl space-y-3"
+                style={{ backgroundColor: "var(--fl-surface)", border: "1px solid var(--fl-border)" }}
+              >
+                <h3 className="text-sm font-bold uppercase tracking-wider mb-2" style={{ color: "var(--fl-text)" }}>
                   Effectiveness Verification History ({qc.effectivenessChecks.length})
                 </h3>
                 <div className="space-y-2.5">
-                  {qc.effectivenessChecks.map((v: any) => (
-                    <div
-                      key={v.id}
-                      className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 text-xs space-y-1"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className={`px-2 py-0.5 rounded-full border text-[10px] font-mono font-semibold ${
-                          v.outcome === "EFFECTIVE"
-                            ? "bg-emerald-950/60 text-emerald-300 border-emerald-700/60"
-                            : v.outcome === "NOT_EFFECTIVE"
-                            ? "bg-red-950/60 text-red-300 border-red-700/60"
-                            : "bg-yellow-950/60 text-yellow-300 border-yellow-700/60"
-                        }`}>
-                          {v.outcome}
-                        </span>
-                        <span className="text-[11px] font-mono text-slate-500">
-                          {new Date(v.reviewedAt).toLocaleDateString()}
-                        </span>
+                  {qc.effectivenessChecks.map((v: any) => {
+                    const outcomeStyle: React.CSSProperties =
+                      v.outcome === "EFFECTIVE"
+                        ? { backgroundColor: "#DCFCE7", color: "#216E4A", borderColor: "#16A34A" }
+                        : v.outcome === "NOT_EFFECTIVE"
+                        ? { backgroundColor: "#FEF2F2", color: "#B42318", borderColor: "#DC2626" }
+                        : { backgroundColor: "#FEFCE8", color: "#8A5700", borderColor: "#CA8A04" };
+                    return (
+                      <div
+                        key={v.id}
+                        className="p-3.5 rounded-lg text-xs space-y-1"
+                        style={{ backgroundColor: "var(--fl-surface-muted)", border: "1px solid var(--fl-border)" }}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span
+                            className="px-2 py-0.5 rounded-full border text-[10px] font-mono font-semibold"
+                            style={outcomeStyle}
+                          >
+                            {v.outcome}
+                          </span>
+                          <span className="text-[11px] font-mono tabular-nums" style={{ color: "var(--fl-text-muted)" }}>
+                            {new Date(v.reviewedAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <div className="font-semibold mt-1" style={{ color: "var(--fl-text)" }}>{v.criterion}</div>
+                        <div className="text-[11px] font-mono" style={{ color: "var(--fl-text-muted)" }}>
+                          Sample Size: {v.sampleSize} · Failures: {v.outOfToleranceCount} · Auditor: {v.reviewer.displayName || v.reviewer.email}
+                        </div>
+                        {(v.reviewerComment || v.notes) && (
+                          <p className="italic mt-1" style={{ color: "var(--fl-text-muted)" }}>
+                            &quot;{v.reviewerComment || v.notes}&quot;
+                          </p>
+                        )}
                       </div>
-                      <div className="font-semibold text-slate-200 mt-1">{v.criterion}</div>
-                      <div className="text-[11px] font-mono text-slate-400">
-                        Sample Size: {v.sampleSize} • Failures: {v.outOfToleranceCount} • Auditor: {v.reviewer.displayName || v.reviewer.email}
-                      </div>
-                      {v.notes && <p className="text-slate-400 italic mt-1">&quot;{v.notes}&quot;</p>}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -353,33 +344,41 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
           />
 
           {/* Evidence Files List */}
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 backdrop-blur-sm">
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-3">
+          <div
+            className="p-6 rounded-xl"
+            style={{ backgroundColor: "var(--fl-surface)", border: "1px solid var(--fl-border)" }}
+          >
+            <h3 className="text-sm font-bold uppercase tracking-wider mb-3" style={{ color: "var(--fl-text)" }}>
               Captured Evidence ({qc.evidence.length})
             </h3>
             {qc.evidence.length === 0 ? (
-              <p className="text-xs text-slate-500 py-4 text-center">No files uploaded yet.</p>
+              <p className="text-xs py-4 text-center" style={{ color: "var(--fl-text-muted)" }}>No files uploaded yet.</p>
             ) : (
               <div className="space-y-2">
                 {qc.evidence.map((ev: any) => (
                   <div
                     key={ev.id}
-                    className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 flex items-center justify-between text-xs"
+                    className="p-3 rounded-lg flex items-center justify-between text-xs"
+                    style={{ backgroundColor: "var(--fl-surface-muted)", border: "1px solid var(--fl-border)" }}
                   >
                     <div className="min-w-0 pr-2">
-                      <div className="font-semibold text-white truncate">{ev.originalFilename}</div>
-                      <div className="text-[10px] text-slate-400 font-mono mt-0.5">
-                        {ev.evidenceType} • {(ev.fileSizeBytes / 1024).toFixed(1)} KB
+                      <div className="font-semibold truncate" style={{ color: "var(--fl-text)" }}>
+                        {ev.originalFileName || ev.originalFilename || "Evidence File"}
+                      </div>
+                      <div className="text-[10px] font-mono mt-0.5" style={{ color: "var(--fl-text-muted)" }}>
+                        {ev.evidenceType} · {(Number(ev.byteSize || 0) / 1024).toFixed(1)} KB
                       </div>
                     </div>
                     <a
                       href={`/api/v1/tenants/${membership.tenantId}/evidence/${ev.id}/download`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-blue-400 hover:bg-slate-900 transition-colors shrink-0"
+                      className="p-1.5 rounded-lg transition-colors shrink-0"
+                      style={{ color: "var(--fl-text-muted)" }}
                       title="Download file"
+                      aria-label={`Download ${ev.originalFileName || ev.originalFilename || "Evidence"}`}
                     >
-                      <Download className="h-4 w-4" />
+                      <Download className="h-4 w-4" aria-hidden="true" />
                     </a>
                   </div>
                 ))}

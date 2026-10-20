@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { AlertOctagon, Send, FileEdit, AlertCircle, Loader2, Info } from "lucide-react";
+import { AlertOctagon, Send, FileEdit, AlertCircle, Loader2 } from "lucide-react";
 import { CreateCaseSchema } from "@/lib/validation/case";
 
 interface SiteOption {
@@ -103,25 +103,30 @@ export function CaseIntakeForm({ tenantId, sites }: CaseIntakeFormProps) {
     }
   };
 
+  const inputStyle = (hasError = false) =>
+    `w-full px-3.5 py-2.5 rounded-xl bg-white border ${
+      hasError ? "border-red-500 focus:ring-red-500" : "border-[#D8E0E9] focus:ring-[#2F5F91]"
+    } text-sm text-[#17212F] placeholder-slate-400 focus:outline-none focus:ring-2 transition-all`;
+
   return (
-    <div className="p-6 sm:p-8 rounded-2xl bg-slate-900/60 border border-slate-800 backdrop-blur-sm max-w-4xl mx-auto shadow-2xl">
-      <div className="flex items-center gap-3 pb-6 border-b border-slate-800">
-        <div className="p-3 rounded-xl bg-blue-500/10 text-blue-400">
+    <div className="p-6 sm:p-8 rounded-2xl bg-white border border-[#D8E0E9] max-w-4xl mx-auto shadow-sm">
+      <div className="flex items-center gap-3 pb-6 border-b border-[#D8E0E9]">
+        <div className="p-3 rounded-xl bg-[#E7EFF7] text-[#2F5F91]">
           <AlertOctagon className="h-6 w-6" />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-white tracking-tight">
+          <h2 className="text-xl font-bold text-[#17212F] tracking-tight">
             Report Nonconformance / Intake Defect
           </h2>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-[#526173] mt-0.5">
             Log observed manufacturing defect parameters, tolerances, and initial containment.
           </p>
         </div>
       </div>
 
       {errorMessage && (
-        <div className="mt-6 p-4 rounded-xl bg-red-950/60 border border-red-700/60 flex items-center gap-2.5 text-xs text-red-300">
-          <AlertCircle className="h-5 w-5 text-red-400 shrink-0" />
+        <div className="mt-6 p-4 rounded-xl bg-red-50 border border-red-200 flex items-center gap-2.5 text-xs text-[#B42318]">
+          <AlertCircle className="h-5 w-5 text-[#B42318] shrink-0" />
           <span>{errorMessage}</span>
         </div>
       )}
@@ -130,14 +135,14 @@ export function CaseIntakeForm({ tenantId, sites }: CaseIntakeFormProps) {
         {/* Core Case Information */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-[#526173] mb-1.5">
               Factory Site *
             </label>
             <select
               value={siteId}
               onChange={(e) => setSiteId(e.target.value)}
               disabled={isLoading}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={inputStyle()}
             >
               {sites.map((s) => (
                 <option key={s.id} value={s.id}>
@@ -148,14 +153,14 @@ export function CaseIntakeForm({ tenantId, sites }: CaseIntakeFormProps) {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-[#526173] mb-1.5">
               Initial Severity *
             </label>
             <select
               value={severity}
               onChange={(e) => setSeverity(e.target.value as any)}
               disabled={isLoading}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={inputStyle()}
             >
               <option value="LOW">Low (Cosmetic, non-functional)</option>
               <option value="MEDIUM">Medium (Out of spec, salvageable)</option>
@@ -166,7 +171,7 @@ export function CaseIntakeForm({ tenantId, sites }: CaseIntakeFormProps) {
         </div>
 
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-[#526173] mb-1.5">
             Defect Title / Summary *
           </label>
           <input
@@ -178,17 +183,15 @@ export function CaseIntakeForm({ tenantId, sites }: CaseIntakeFormProps) {
             }}
             placeholder="e.g. Bore diameter undersized by 0.04mm on Bearing Housing"
             disabled={isLoading}
-            className={`w-full px-4 py-2.5 rounded-xl bg-slate-950/80 border text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              fieldErrors.title ? "border-red-500 focus:ring-red-500" : "border-slate-800"
-            }`}
+            className={inputStyle(!!fieldErrors.title)}
           />
           {fieldErrors.title && (
-            <p className="mt-1 text-xs text-red-400 font-medium">{fieldErrors.title}</p>
+            <p className="mt-1 text-xs text-[#B42318] font-medium">{fieldErrors.title}</p>
           )}
         </div>
 
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-[#526173] mb-1.5">
             Detailed Problem Description *
           </label>
           <textarea
@@ -200,19 +203,17 @@ export function CaseIntakeForm({ tenantId, sites }: CaseIntakeFormProps) {
             }}
             placeholder="Describe what was observed, machine state, tooling conditions, and initial containment actions taken..."
             disabled={isLoading}
-            className={`w-full px-4 py-2.5 rounded-xl bg-slate-950/80 border text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-              fieldErrors.description ? "border-red-500 focus:ring-red-500" : "border-slate-800"
-            }`}
+            className={inputStyle(!!fieldErrors.description)}
           />
           {fieldErrors.description && (
-            <p className="mt-1 text-xs text-red-400 font-medium">{fieldErrors.description}</p>
+            <p className="mt-1 text-xs text-[#B42318] font-medium">{fieldErrors.description}</p>
           )}
         </div>
 
         {/* Manufacturing Identifiers */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-[#526173] mb-1.5">
               Part Number
             </label>
             <input
@@ -221,12 +222,12 @@ export function CaseIntakeForm({ tenantId, sites }: CaseIntakeFormProps) {
               onChange={(e) => setPartNumber(e.target.value)}
               placeholder="e.g. PN-4091-B"
               disabled={isLoading}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={inputStyle()}
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-[#526173] mb-1.5">
               Machine ID / Cell
             </label>
             <input
@@ -235,12 +236,12 @@ export function CaseIntakeForm({ tenantId, sites }: CaseIntakeFormProps) {
               onChange={(e) => setMachineId(e.target.value)}
               placeholder="e.g. CNC-MILL-04"
               disabled={isLoading}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={inputStyle()}
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-[#526173] mb-1.5">
               Operation / Process
             </label>
             <input
@@ -249,7 +250,7 @@ export function CaseIntakeForm({ tenantId, sites }: CaseIntakeFormProps) {
               onChange={(e) => setOperation(e.target.value)}
               placeholder="e.g. OP-20 Finish Boring"
               disabled={isLoading}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={inputStyle()}
             />
           </div>
         </div>
@@ -257,7 +258,7 @@ export function CaseIntakeForm({ tenantId, sites }: CaseIntakeFormProps) {
         {/* Measurement & Specification */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-[#526173] mb-1.5">
               Observed Value
             </label>
             <input
@@ -267,12 +268,12 @@ export function CaseIntakeForm({ tenantId, sites }: CaseIntakeFormProps) {
               onChange={(e) => setObservedValue(e.target.value)}
               placeholder="e.g. 49.96"
               disabled={isLoading}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={inputStyle()}
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-[#526173] mb-1.5">
               Specification / Target
             </label>
             <input
@@ -281,12 +282,12 @@ export function CaseIntakeForm({ tenantId, sites }: CaseIntakeFormProps) {
               onChange={(e) => setSpecification(e.target.value)}
               placeholder="e.g. 50.00 ± 0.02"
               disabled={isLoading}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={inputStyle()}
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-[#526173] mb-1.5">
               Unit
             </label>
             <input
@@ -295,7 +296,7 @@ export function CaseIntakeForm({ tenantId, sites }: CaseIntakeFormProps) {
               onChange={(e) => setUnit(e.target.value)}
               placeholder="e.g. mm, µm, bar"
               disabled={isLoading}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={inputStyle()}
             />
           </div>
         </div>
@@ -303,7 +304,7 @@ export function CaseIntakeForm({ tenantId, sites }: CaseIntakeFormProps) {
         {/* Quantity Inspected vs Affected */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-[#526173] mb-1.5">
               Quantity Inspected
             </label>
             <input
@@ -313,12 +314,12 @@ export function CaseIntakeForm({ tenantId, sites }: CaseIntakeFormProps) {
               onChange={(e) => setQuantityInspected(e.target.value)}
               placeholder="e.g. 50"
               disabled={isLoading}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={inputStyle()}
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-[#526173] mb-1.5">
               Quantity Affected / Nonconforming
             </label>
             <input
@@ -331,12 +332,10 @@ export function CaseIntakeForm({ tenantId, sites }: CaseIntakeFormProps) {
               }}
               placeholder="e.g. 8"
               disabled={isLoading}
-              className={`w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                fieldErrors.quantityAffected ? "border-red-500 focus:ring-red-500" : "border-slate-800"
-              }`}
+              className={inputStyle(!!fieldErrors.quantityAffected)}
             />
             {fieldErrors.quantityAffected && (
-              <p className="mt-1 text-xs text-red-400 font-medium">{fieldErrors.quantityAffected}</p>
+              <p className="mt-1 text-xs text-[#B42318] font-medium">{fieldErrors.quantityAffected}</p>
             )}
           </div>
         </div>
@@ -356,14 +355,14 @@ export function CaseIntakeForm({ tenantId, sites }: CaseIntakeFormProps) {
         </div>
 
         {/* Action Buttons */}
-        <div className="pt-6 border-t border-slate-800 flex flex-wrap items-center justify-end gap-3">
+        <div className="pt-6 border-t border-[#D8E0E9] flex flex-wrap items-center justify-end gap-3">
           <button
             type="button"
             onClick={() => handleSubmit(true)}
             disabled={isLoading}
-            className="px-5 py-2.5 rounded-xl border border-slate-800 bg-slate-950 hover:bg-slate-800 text-slate-300 text-xs font-semibold transition-all flex items-center gap-1.5"
+            className="px-5 py-2.5 rounded-xl border border-[#D8E0E9] bg-white hover:bg-[#F7F9FC] text-[#17212F] text-xs font-semibold transition-all flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2F5F91]"
           >
-            <FileEdit className="h-4 w-4" />
+            <FileEdit className="h-4 w-4 text-[#526173]" />
             Save as Draft
           </button>
 
@@ -371,7 +370,7 @@ export function CaseIntakeForm({ tenantId, sites }: CaseIntakeFormProps) {
             type="button"
             onClick={() => handleSubmit(false)}
             disabled={isLoading}
-            className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-lg shadow-blue-500/20 transition-all flex items-center gap-1.5 disabled:opacity-50"
+            className="px-6 py-2.5 rounded-xl bg-[#2F5F91] hover:bg-[#214B78] text-white text-xs font-semibold shadow-sm transition-all flex items-center gap-1.5 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2F5F91]"
           >
             {isLoading ? (
               <>

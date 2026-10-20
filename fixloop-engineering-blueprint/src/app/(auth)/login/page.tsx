@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  Cpu,
   Shield,
   Wrench,
   UserCheck,
@@ -18,43 +17,43 @@ import {
 const DEMO_PERSONAS = [
   {
     role: "QUALITY_ENGINEER",
-    name: "Demo Quality Engineer",
+    name: "Quality Engineer",
     email: "qe@synthetic-demo.com",
-    desc: "Triage nonconformances, isolate 5-Why root cause, evaluate effectiveness & close cases.",
+    desc: "Triage nonconformances, isolate root cause, evaluate effectiveness and close cases.",
     icon: Shield,
-    badgeColor: "bg-purple-500/10 text-purple-400 border-purple-500/30",
+    badgeStyle: { backgroundColor: "#E7EFF7", color: "#2F5F91", borderColor: "#2F5F91" },
   },
   {
     role: "OPERATOR",
-    name: "Demo Operator",
+    name: "Operator",
     email: "operator@synthetic-demo.com",
-    desc: "Report shop-floor defects, log observed deviations & attach photo evidence.",
+    desc: "Report shop-floor defects, log observed deviations and attach photo evidence.",
     icon: Wrench,
-    badgeColor: "bg-amber-500/10 text-amber-400 border-amber-500/30",
+    badgeStyle: { backgroundColor: "#FEF3C7", color: "#8A5700", borderColor: "#8A5700" },
   },
   {
     role: "ACTION_OWNER",
-    name: "Demo Action Owner",
+    name: "Action Owner",
     email: "actionowner@synthetic-demo.com",
-    desc: "Execute corrective tasks, upload proof of fix & submit completion notes.",
+    desc: "Execute corrective tasks, upload proof of fix and submit completion notes.",
     icon: CheckCircle,
-    badgeColor: "bg-blue-500/10 text-blue-400 border-blue-500/30",
+    badgeStyle: { backgroundColor: "#E7EFF7", color: "#245B86", borderColor: "#245B86" },
   },
   {
     role: "TENANT_ADMIN",
-    name: "Demo Admin",
+    name: "Tenant Admin",
     email: "admin@synthetic-demo.com",
-    desc: "Manage factory sites, oversee member roles & configure workspace settings.",
+    desc: "Manage factory sites, oversee member roles and configure workspace settings.",
     icon: UserCheck,
-    badgeColor: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
+    badgeStyle: { backgroundColor: "#DCFCE7", color: "#216E4A", borderColor: "#216E4A" },
   },
   {
     role: "AUDITOR",
-    name: "Demo Auditor",
+    name: "Auditor",
     email: "auditor@synthetic-demo.com",
-    desc: "Read-only compliance inspection of closed cases, reports and immutable audit trail.",
+    desc: "Read-only compliance inspection of closed cases and immutable audit trail.",
     icon: Eye,
-    badgeColor: "bg-slate-500/10 text-slate-400 border-slate-500/30",
+    badgeStyle: { backgroundColor: "#F7F9FC", color: "#526173", borderColor: "#D8E0E9" },
   },
 ];
 
@@ -69,7 +68,8 @@ export default function LoginPage() {
   const validateEmailFormat = (val: string) => {
     const trimmed = val.trim();
     if (!trimmed) return "Please enter your work email address.";
-    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+    const emailRegex =
+      /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
     if (!emailRegex.test(trimmed)) {
       return "Please enter a valid work email address (e.g. name@company.com).";
     }
@@ -83,7 +83,6 @@ export default function LoginPage() {
       return;
     }
 
-    // Client honeypot check
     if (botField.trim() !== "") {
       setErrorMessage("Automated submission detected.");
       return;
@@ -106,7 +105,9 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error?.message || "Authentication failed. Check your credentials.");
+        throw new Error(
+          data.error?.message || "Authentication failed. Check your credentials."
+        );
       }
 
       router.push("/app");
@@ -123,69 +124,102 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#090d16] text-slate-100 flex flex-col justify-center items-center px-4 py-12 relative overflow-hidden">
-      {/* Background glow effects */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[140px] pointer-events-none" />
+    <div
+      className="min-h-screen flex flex-col justify-center items-center px-4 py-12"
+      style={{ backgroundColor: "var(--fl-blue-050)", color: "var(--fl-text)" }}
+    >
+      <div className="w-full max-w-md">
 
-      <div className="w-full max-w-xl relative z-10">
-        {/* Brand Header */}
+        {/* Brand */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-400 shadow-lg shadow-blue-500/25 mb-4">
-            <Cpu className="h-6 w-6 text-white" />
+          <div
+            className="inline-flex items-center justify-center h-12 w-12 rounded-xl text-white font-bold text-lg mb-4"
+            style={{ backgroundColor: "var(--fl-blue-700)" }}
+          >
+            FL
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-            FixLoop Quality Platform
+          <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--fl-text)" }}>
+            Sign in to FixLoop
           </h1>
-          <p className="mt-2 text-sm text-slate-400">
-            Sign in to access your tenant workspace and audit trail.
+          <p className="mt-1.5 text-sm" style={{ color: "var(--fl-text-muted)" }}>
+            Access your tenant workspace and audit trail.
           </p>
         </div>
 
-        {/* Error notification */}
+        {/* Error alert */}
         {errorMessage && (
-          <div className="mb-6 p-4 rounded-xl bg-red-950/60 border border-red-700/60 flex items-start gap-3 text-red-200 text-sm">
-            <AlertCircle className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />
+          <div
+            role="alert"
+            className="mb-5 p-4 rounded-lg flex items-start gap-3 text-sm"
+            style={{
+              backgroundColor: "#FEF2F2",
+              border: "1px solid #FECACA",
+              color: "var(--fl-danger)",
+            }}
+          >
+            <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" aria-hidden="true" />
             <div>
-              <p className="font-semibold text-red-300">Sign in error</p>
-              <p className="mt-0.5 text-xs text-red-200/90">{errorMessage}</p>
+              <p className="font-semibold">Sign in error</p>
+              <p className="mt-0.5 text-xs">{errorMessage}</p>
             </div>
           </div>
         )}
 
-        {/* Login Form */}
-        <div className="p-6 sm:p-8 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-2xl backdrop-blur-md mb-6">
-          <form onSubmit={onSubmit} className="space-y-4">
+        {/* Login form */}
+        <div
+          className="rounded-xl p-6 sm:p-8 mb-5"
+          style={{
+            backgroundColor: "var(--fl-surface)",
+            border: "1px solid var(--fl-border)",
+            boxShadow: "0 1px 3px rgba(23,33,47,0.06)",
+          }}
+        >
+          <form onSubmit={onSubmit} className="space-y-5" noValidate>
             <div>
-              <label htmlFor="email" className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
-                Work Email Address
+              <label
+                htmlFor="email"
+                className="block text-xs font-semibold mb-1.5"
+                style={{ color: "var(--fl-text)" }}
+              >
+                Work email address <span aria-hidden="true" style={{ color: "var(--fl-danger)" }}>*</span>
               </label>
               <input
                 id="email"
                 type="email"
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@precision-manufacturing.com"
+                placeholder="name@company.com"
                 disabled={isLoading}
-                className="w-full px-4 py-3 rounded-xl bg-slate-950/80 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all"
+                required
+                className="fl-input"
+                aria-required="true"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
-                Password
+              <label
+                htmlFor="password"
+                className="block text-xs font-semibold mb-1.5"
+                style={{ color: "var(--fl-text)" }}
+              >
+                Password <span aria-hidden="true" style={{ color: "var(--fl-danger)" }}>*</span>
               </label>
               <input
                 id="password"
                 type="password"
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••••••"
                 disabled={isLoading}
-                className="w-full px-4 py-3 rounded-xl bg-slate-950/80 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all"
+                required
+                className="fl-input"
+                aria-required="true"
               />
             </div>
 
-            {/* Spam Honeypot Field (Offscreen / Hidden to humans) */}
+            {/* Honeypot */}
             <div className="sr-only" aria-hidden="true" style={{ display: "none" }}>
               <label htmlFor="website_hp">Do not fill this field</label>
               <input
@@ -201,59 +235,80 @@ export default function LoginPage() {
 
             <button
               type="submit"
+              id="login-submit"
               disabled={isLoading}
-              className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-semibold text-sm shadow-lg shadow-blue-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              className="fl-btn-primary w-full py-3 text-sm rounded-lg"
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Verifying Identity...
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                  Verifying…
                 </>
               ) : (
                 <>
-                  Sign In to Workspace
-                  <ArrowRight className="h-4 w-4" />
+                  Sign in to workspace
+                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </>
               )}
             </button>
           </form>
         </div>
 
-        {/* 1-Click Demo Persona Selector */}
-        <div className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800/80 mb-6">
+        {/* Demo persona selector */}
+        <div
+          className="rounded-xl p-5 mb-5"
+          style={{
+            backgroundColor: "var(--fl-surface)",
+            border: "1px solid var(--fl-border)",
+          }}
+        >
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-              Interactive Demo Personas
+            <h2 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--fl-text-muted)" }}>
+              Demo personas
             </h2>
-            <span className="text-[11px] text-blue-400 font-mono">1-Click Sign In</span>
+            <span className="text-[11px] font-mono" style={{ color: "var(--fl-blue-700)" }}>
+              1-click sign-in
+            </span>
           </div>
 
-          <div className="space-y-2.5">
+          <div className="space-y-2">
             {DEMO_PERSONAS.map((persona) => {
               const Icon = persona.icon;
               return (
                 <button
                   key={persona.email}
+                  id={`demo-persona-${persona.role.toLowerCase()}`}
                   onClick={() => {
                     setEmail(persona.email);
                     handleLogin(persona.email);
                   }}
                   disabled={isLoading}
-                  className="w-full text-left p-3.5 rounded-xl border border-slate-800 bg-slate-950/60 hover:bg-slate-800/60 hover:border-slate-700 transition-all flex items-start gap-3 group"
+                  className="w-full text-left p-3 rounded-lg flex items-start gap-3 transition-colors group hover:border-[var(--fl-blue-700)] hover:bg-[var(--fl-blue-050)]"
+                  style={{
+                    border: "1px solid var(--fl-border)",
+                    backgroundColor: "var(--fl-surface-muted)",
+                  }}
+                  aria-label={`Sign in as ${persona.name}`}
                 >
-                  <div className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 group-hover:text-blue-400 transition-colors shrink-0">
-                    <Icon className="h-4 w-4" />
+                  <div
+                    className="shrink-0 h-8 w-8 rounded-lg flex items-center justify-center"
+                    style={{ backgroundColor: "var(--fl-blue-050)" }}
+                  >
+                    <Icon className="h-4 w-4" style={{ color: "var(--fl-blue-700)" }} aria-hidden="true" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-sm text-white group-hover:text-blue-300 transition-colors">
+                    <div className="flex items-center flex-wrap gap-1.5">
+                      <span className="text-sm font-semibold" style={{ color: "var(--fl-text)" }}>
                         {persona.name}
                       </span>
-                      <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${persona.badgeColor}`}>
+                      <span
+                        className="text-[10px] font-mono px-2 py-0.5 rounded-full border"
+                        style={persona.badgeStyle}
+                      >
                         {persona.role}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-400 mt-0.5 truncate">
+                    <p className="text-xs mt-0.5 leading-relaxed" style={{ color: "var(--fl-text-muted)" }}>
                       {persona.desc}
                     </p>
                   </div>
@@ -263,18 +318,18 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Legal & Compliance Footer Links */}
-        <div className="text-center text-xs text-slate-500 flex items-center justify-center gap-4">
-          <Link href="/privacy" className="hover:text-slate-400 transition-colors underline-offset-2 hover:underline">
+        {/* Legal footer */}
+        <div className="text-center text-xs flex items-center justify-center gap-4" style={{ color: "var(--fl-text-muted)" }}>
+          <Link href="/privacy" className="hover:underline underline-offset-2 transition-colors">
             Privacy Policy
           </Link>
-          <span>•</span>
-          <Link href="/terms" className="hover:text-slate-400 transition-colors underline-offset-2 hover:underline">
-            Terms & Conditions
+          <span aria-hidden="true">·</span>
+          <Link href="/terms" className="hover:underline underline-offset-2 transition-colors">
+            Terms
           </Link>
-          <span>•</span>
-          <Link href="/" className="hover:text-slate-400 transition-colors underline-offset-2 hover:underline">
-            System Architecture
+          <span aria-hidden="true">·</span>
+          <Link href="/" className="hover:underline underline-offset-2 transition-colors">
+            Home
           </Link>
         </div>
       </div>

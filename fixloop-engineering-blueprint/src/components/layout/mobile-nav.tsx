@@ -16,23 +16,41 @@ export function MobileNav() {
   ];
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#090d16]/95 backdrop-blur-lg border-t border-slate-800/80 px-2 py-2">
+    <nav
+      className="md:hidden fixed bottom-0 left-0 right-0 z-50 px-2 py-2"
+      style={{
+        backgroundColor: "var(--fl-surface)",
+        borderTop: "1px solid var(--fl-border)",
+        boxShadow: "0 -1px 4px rgba(23,33,47,0.08)",
+      }}
+      aria-label="Mobile navigation"
+    >
       <div className="flex items-center justify-around">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = pathname === item.href;
+          const isActive = pathname === item.href ||
+            (item.href !== "/app" && item.href !== "/app/cases/new" && pathname.startsWith(item.href));
 
           if (item.highlight) {
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className="flex flex-col items-center justify-center p-1 text-blue-400 -mt-5"
+                aria-label="Report new nonconformance"
+                className="flex flex-col items-center justify-center p-1 -mt-5"
               >
-                <div className="h-11 w-11 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/40 border-2 border-slate-900">
-                  <Icon className="h-6 w-6" />
+                <div
+                  className="h-12 w-12 rounded-full flex items-center justify-center text-white shadow-md"
+                  style={{ backgroundColor: "var(--fl-blue-700)", border: "3px solid var(--fl-surface)" }}
+                >
+                  <Icon className="h-6 w-6" aria-hidden="true" />
                 </div>
-                <span className="text-[10px] font-semibold mt-0.5 text-blue-400">Report</span>
+                <span
+                  className="text-[10px] font-semibold mt-0.5"
+                  style={{ color: "var(--fl-blue-700)" }}
+                >
+                  Report
+                </span>
               </Link>
             );
           }
@@ -41,12 +59,17 @@ export function MobileNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center justify-center p-1.5 rounded-lg text-xs transition-colors ${
-                isActive ? "text-blue-400 font-medium" : "text-slate-400 hover:text-slate-200"
-              }`}
+              aria-current={isActive ? "page" : undefined}
+              className="flex flex-col items-center justify-center p-1.5 rounded-lg text-xs transition-colors min-w-[48px] min-h-[48px]"
+              style={{ color: isActive ? "var(--fl-blue-700)" : "var(--fl-text-muted)" }}
             >
-              <Icon className="h-5 w-5 mb-0.5" />
-              <span className="text-[10px]">{item.label}</span>
+              <Icon className="h-5 w-5 mb-0.5 shrink-0" aria-hidden="true" />
+              <span
+                className="text-[10px] font-medium"
+                style={{ fontWeight: isActive ? 600 : 400 }}
+              >
+                {item.label}
+              </span>
             </Link>
           );
         })}

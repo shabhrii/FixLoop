@@ -2,65 +2,230 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   FixLoop Design Token System (design.md §3 Color System)
+   ============================================================ */
 :root {
-  --background: #090d16;
-  --foreground: #f1f5f9;
-  --card: #0f172a;
-  --card-border: #1e293b;
-  --primary: #3b82f6;
-  --primary-hover: #2563eb;
-  --accent: #06b6d4;
+  /* Brand blue scale */
+  --fl-blue-900: #17365A;
+  --fl-blue-800: #214B78;
+  --fl-blue-700: #2F5F91;
+  --fl-blue-600: #3E74A8;
+  --fl-blue-100: #E7EFF7;
+  --fl-blue-050: #F3F7FB;
+
+  /* Surface tokens */
+  --fl-page: #FFFFFF;
+  --fl-surface: #FFFFFF;
+  --fl-surface-muted: #F7F9FC;
+  --fl-border: #D8E0E9;
+
+  /* Text tokens */
+  --fl-text: #17212F;
+  --fl-text-muted: #526173;
+
+  /* Semantic status tokens */
+  --fl-success: #216E4A;
+  --fl-warning: #8A5700;
+  --fl-danger: #B42318;
+  --fl-info: #245B86;
+}
+
+/* ============================================================
+   Base document styles
+   ============================================================ */
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
 }
 
 body {
-  background-color: var(--background);
-  color: var(--foreground);
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  background-color: var(--fl-page);
+  color: var(--fl-text);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
   min-height: 100vh;
   margin: 0;
   padding: 0;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Glassmorphism & Panel Utilities */
-.glass-panel {
-  background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(51, 65, 85, 0.5);
+/* Tabular numerals for identifiers, counts, dates */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
 }
 
-.glass-panel-glow {
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(59, 130, 246, 0.3);
-  box-shadow: 0 0 25px rgba(59, 130, 246, 0.1);
+/* ============================================================
+   Focus ring — visible for keyboard navigation
+   ============================================================ */
+:focus-visible {
+  outline: 2px solid var(--fl-blue-700);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
-.glow-blue {
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.25);
+/* ============================================================
+   Selection
+   ============================================================ */
+::selection {
+  background-color: var(--fl-blue-100);
+  color: var(--fl-blue-900);
 }
 
-.glow-amber {
-  box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
-}
-
-.glow-emerald {
-  box-shadow: 0 0 20px rgba(16, 185, 129, 0.25);
-}
-
-/* Custom Scrollbars */
+/* ============================================================
+   Scrollbar — light theme
+   ============================================================ */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #090d16;
+  background: var(--fl-surface-muted);
 }
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: var(--fl-border);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: var(--fl-blue-600);
+}
+
+/* ============================================================
+   Reduced motion support (design.md §12)
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================
+   Typography scale utilities  (design.md §4)
+   ============================================================ */
+.text-display {
+  font-size: clamp(2.25rem, 4vw, 3.75rem);
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+/* ============================================================
+   Surface / Panel utilities  (design.md §5)
+   ============================================================ */
+.fl-card {
+  background-color: var(--fl-surface);
+  border: 1px solid var(--fl-border);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.fl-card-muted {
+  background-color: var(--fl-surface-muted);
+  border: 1px solid var(--fl-border);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.fl-section-blue {
+  background-color: var(--fl-blue-050);
+  border: 1px solid var(--fl-blue-100);
+  border-radius: 12px;
+}
+
+/* ============================================================
+   Button base styles  (design.md §8 Component contract)
+   ============================================================ */
+.fl-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: var(--fl-blue-700);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.875rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.fl-btn-primary:hover:not(:disabled) {
+  background-color: var(--fl-blue-800);
+}
+
+.fl-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.fl-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: var(--fl-surface);
+  color: var(--fl-blue-700);
+  font-weight: 600;
+  font-size: 0.875rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 8px;
+  border: 1.5px solid var(--fl-blue-700);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.fl-btn-secondary:hover:not(:disabled) {
+  background-color: var(--fl-blue-050);
+}
+
+/* ============================================================
+   Status badge base  (design.md §8 StatusBadge)
+   ============================================================ */
+.fl-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  white-space: nowrap;
+}
+
+/* ============================================================
+   Form input base  (design.md §8)
+   ============================================================ */
+.fl-input {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  background-color: var(--fl-surface);
+  border: 1.5px solid var(--fl-border);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: var(--fl-text);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.fl-input:focus {
+  outline: none;
+  border-color: var(--fl-blue-700);
+  box-shadow: 0 0 0 3px rgba(47, 95, 145, 0.12);
+}
+
+.fl-input::placeholder {
+  color: var(--fl-text-muted);
+  opacity: 0.6;
 }

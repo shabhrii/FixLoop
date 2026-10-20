@@ -22,23 +22,32 @@ export default async function NewCasePage() {
         select: { id: true, name: true, code: true },
         orderBy: { name: "asc" },
       });
+
+      // Ensure at least one active site exists for this tenant in database
+      if (sites.length === 0) {
+        const defaultSite = await prisma.site.create({
+          data: {
+            tenantId: membership.tenantId,
+            name: "Main Production Plant",
+            code: "PLANT-01",
+            isActive: true,
+          },
+          select: { id: true, name: true, code: true },
+        });
+        sites = [defaultSite];
+      }
     }
   } catch (err) {
     console.error("Error fetching sites for intake:", err);
-  }
-
-  // Fallback demo site if none exists
-  if (sites.length === 0) {
-    sites = [
-      { id: "site-demo-main", name: "Main Machining Plant", code: "PLANT-01" },
-    ];
   }
 
   const membership = await prisma.membership.findFirst({
     where: { userId: user.id, isActive: true },
   });
 
-  const tenantId = membership?.tenantId || "synthetic-tenant-01";
+  if (!membership) redirect("/login");
+
+  const tenantId = membership.tenantId;
 
   return (
     <div className="py-2">

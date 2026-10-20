@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import path from "path";
 import { PrivateStorage } from "@/lib/storage/private-storage";
 
 export async function GET(req: NextRequest) {
@@ -14,10 +15,13 @@ export async function GET(req: NextRequest) {
     }
 
     const buffer = await PrivateStorage.readBytes(payload.objectKey);
+    const fileName = path.basename(payload.objectKey);
+
     return new NextResponse(new Uint8Array(buffer), {
       status: 200,
       headers: {
         "Content-Type": "application/octet-stream",
+        "Content-Disposition": `attachment; filename="${fileName}"`,
         "X-Content-Type-Options": "nosniff",
         "Cache-Control": "private, no-cache, no-store, max-age=0",
       },

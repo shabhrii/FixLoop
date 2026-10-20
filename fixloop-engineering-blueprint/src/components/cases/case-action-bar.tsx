@@ -6,9 +6,7 @@ import {
   ShieldAlert,
   Lock,
   PlayCircle,
-  AlertTriangle,
   Loader2,
-  FileText,
 } from "lucide-react";
 import { CaseStatus } from "@prisma/client";
 import { CloseCaseDialog } from "@/components/verification/close-case-dialog";
@@ -81,14 +79,14 @@ export function CaseActionBar({
 
   return (
     <div className="flex flex-wrap items-center gap-3">
-      {/* Triage Button if SUBMITTED */}
-      {isQualityEngineer && currentStatus === "SUBMITTED" && (
+      {/* Triage Button if SUBMITTED or TRIAGE */}
+      {isQualityEngineer && (currentStatus === "SUBMITTED" || currentStatus === "TRIAGE") && (
         <button
           onClick={() => setIsTriageOpen(true)}
-          className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold shadow-lg shadow-purple-600/20 transition-all flex items-center gap-1.5"
+          className="px-4 py-2.5 rounded-xl bg-[#2F5F91] hover:bg-[#214B78] text-white text-xs font-semibold shadow-sm transition-all flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2F5F91]"
         >
           <PlayCircle className="h-4 w-4" />
-          Triage & Begin 5-Why Investigation
+          {currentStatus === "TRIAGE" ? "Complete Triage & Begin 5-Why Investigation" : "Triage & Begin 5-Why Investigation"}
         </button>
       )}
 
@@ -96,7 +94,7 @@ export function CaseActionBar({
       {isQualityEngineer && currentStatus !== "CLOSED" && currentStatus !== "CANCELLED" && (
         <button
           onClick={() => setIsCloseOpen(true)}
-          className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-lg shadow-emerald-600/20 transition-all flex items-center gap-1.5"
+          className="px-4 py-2.5 rounded-xl bg-[#216E4A] hover:bg-[#1a573a] text-white text-xs font-semibold shadow-sm transition-all flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#216E4A]"
         >
           <Lock className="h-4 w-4" />
           Verify & Close Case
@@ -123,19 +121,19 @@ export function CaseActionBar({
 
       {/* Triage Modal */}
       {isTriageOpen && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-slate-900 border border-purple-500/40 p-6 shadow-2xl space-y-4">
-            <div className="flex items-center gap-2.5 text-purple-400">
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white border border-[#D8E0E9] p-6 shadow-xl space-y-4">
+            <div className="flex items-center gap-2.5 text-[#2F5F91]">
               <ShieldAlert className="h-5 w-5" />
-              <h4 className="text-base font-bold text-white">Engineering Triage & Containment</h4>
+              <h4 className="text-base font-bold text-[#17212F]">Engineering Triage & Containment</h4>
             </div>
 
-            <p className="text-xs text-slate-300">
+            <p className="text-xs text-[#526173]">
               Quality Engineer must assess defect containment before releasing case to 5-Why root cause investigation.
             </p>
 
             {triageError && (
-              <div className="p-3 rounded-xl bg-red-950/60 border border-red-700/60 text-xs text-red-300">
+              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-[#B42318]">
                 {triageError}
               </div>
             )}
@@ -143,13 +141,13 @@ export function CaseActionBar({
             <form onSubmit={handleTriage} className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+                  <label className="block text-[11px] font-semibold text-[#526173] uppercase tracking-wider mb-1">
                     Confirmed Severity *
                   </label>
                   <select
                     value={triageSeverity}
                     onChange={(e) => setTriageSeverity(e.target.value as any)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-[#D8E0E9] text-xs text-[#17212F] focus:outline-none focus:ring-2 focus:ring-[#2F5F91]"
                   >
                     <option value="LOW">Low</option>
                     <option value="MEDIUM">Medium</option>
@@ -159,13 +157,13 @@ export function CaseActionBar({
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+                  <label className="block text-[11px] font-semibold text-[#526173] uppercase tracking-wider mb-1">
                     Defect Category *
                   </label>
                   <select
                     value={triageCategory}
                     onChange={(e) => setTriageCategory(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-3 py-2 rounded-xl bg-white border border-[#D8E0E9] text-xs text-[#17212F] focus:outline-none focus:ring-2 focus:ring-[#2F5F91]"
                   >
                     <option value="DIMENSIONAL">Dimensional</option>
                     <option value="SURFACE">Surface Finish</option>
@@ -179,7 +177,7 @@ export function CaseActionBar({
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+                <label className="block text-[11px] font-semibold text-[#526173] uppercase tracking-wider mb-1">
                   Containment Action Implemented *
                 </label>
                 <textarea
@@ -187,7 +185,7 @@ export function CaseActionBar({
                   value={containment}
                   onChange={(e) => setContainment(e.target.value)}
                   placeholder="e.g. Quarantined pallets 409 and 410. Verified cutting tool offset calibrated..."
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3.5 py-2 rounded-xl bg-white border border-[#D8E0E9] text-xs text-[#17212F] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#2F5F91]"
                 />
               </div>
 
@@ -196,14 +194,14 @@ export function CaseActionBar({
                   type="button"
                   onClick={() => setIsTriageOpen(false)}
                   disabled={isTriaging}
-                  className="px-4 py-2 rounded-xl border border-slate-800 text-xs text-slate-400 hover:text-white"
+                  className="px-4 py-2 rounded-xl border border-[#D8E0E9] text-xs text-[#526173] hover:text-[#17212F] bg-white hover:bg-slate-50 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isTriaging || !containment.trim()}
-                  className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold shadow-lg shadow-purple-600/25 flex items-center gap-1.5"
+                  className="px-5 py-2 rounded-xl bg-[#2F5F91] hover:bg-[#214B78] text-white text-xs font-semibold shadow-sm flex items-center gap-1.5 disabled:opacity-50 transition-colors"
                 >
                   {isTriaging ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <PlayCircle className="h-3.5 w-3.5" />}
                   Confirm Triage & Advance to Investigating

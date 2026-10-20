@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  Cpu,
   LayoutDashboard,
   AlertOctagon,
   CheckSquare,
@@ -13,9 +12,10 @@ import {
   Users,
   LogOut,
   Plus,
-  ChevronRight,
   Shield,
   Layers,
+  Menu,
+  X,
 } from "lucide-react";
 import { TenantRole } from "@/types/auth";
 import { MobileNav } from "./mobile-nav";
@@ -35,38 +35,22 @@ interface WorkspaceShellProps {
   children: React.ReactNode;
 }
 
-const ROLE_STYLES: Record<TenantRole, { label: string; color: string }> = {
-  QUALITY_ENGINEER: {
-    label: "Quality Engineer",
-    color: "bg-purple-500/10 text-purple-300 border-purple-500/30",
-  },
-  OPERATOR: {
-    label: "Operator",
-    color: "bg-amber-500/10 text-amber-300 border-amber-500/30",
-  },
-  ACTION_OWNER: {
-    label: "Action Owner",
-    color: "bg-blue-500/10 text-blue-300 border-blue-500/30",
-  },
-  TENANT_ADMIN: {
-    label: "Tenant Admin",
-    color: "bg-emerald-500/10 text-emerald-300 border-emerald-500/30",
-  },
-  AUDITOR: {
-    label: "Auditor",
-    color: "bg-slate-500/10 text-slate-300 border-slate-500/30",
-  },
+/* Role display metadata — design.md §7.9 explicit role labels */
+const ROLE_META: Record<TenantRole, { label: string }> = {
+  QUALITY_ENGINEER: { label: "Quality Engineer" },
+  OPERATOR: { label: "Operator" },
+  ACTION_OWNER: { label: "Action Owner" },
+  TENANT_ADMIN: { label: "Tenant Admin" },
+  AUDITOR: { label: "Auditor" },
 };
 
 export function WorkspaceShell({ user, membership, children }: WorkspaceShellProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const roleMeta = ROLE_STYLES[membership.role] || {
-    label: membership.role,
-    color: "bg-slate-800 text-slate-300 border-slate-700",
-  };
+  const roleMeta = ROLE_META[membership.role] || { label: membership.role };
 
   const navLinks = [
     { href: "/app", label: "Overview", icon: LayoutDashboard },
@@ -91,156 +75,242 @@ export function WorkspaceShell({ user, membership, children }: WorkspaceShellPro
     }
   };
 
+  const isNavActive = (href: string) =>
+    href === "/app" ? pathname === href : pathname.startsWith(href);
+
   return (
-    <div className="min-h-screen bg-[#090d16] text-slate-100 flex">
-      {/* Desktop Sidebar */}
-      <aside className="hidden md:flex flex-col w-64 border-r border-slate-800/80 bg-slate-950/70 backdrop-blur-md fixed top-0 bottom-0 left-0 z-40">
-        {/* Brand Header */}
-        <div className="h-16 px-5 border-b border-slate-800/80 flex items-center justify-between">
-          <Link href="/app" className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-400 flex items-center justify-center shadow-md shadow-blue-500/20">
-              <Cpu className="h-5 w-5 text-white" />
+    <div className="min-h-screen flex" style={{ backgroundColor: "var(--fl-surface-muted)", color: "var(--fl-text)" }}>
+
+      {/* ================================================================
+          Desktop sidebar
+          ================================================================ */}
+      <aside
+        className="hidden md:flex flex-col w-64 fixed top-0 bottom-0 left-0 z-40"
+        style={{
+          backgroundColor: "var(--fl-surface)",
+          borderRight: "1px solid var(--fl-border)",
+        }}
+        aria-label="Application navigation"
+      >
+        {/* Brand / wordmark */}
+        <div
+          className="h-16 px-6 flex items-center justify-between shrink-0"
+          style={{ borderBottom: "1px solid var(--fl-border)" }}
+        >
+          <Link
+            href="/app"
+            className="flex items-center gap-2.5 rounded-md focus-visible:ring-2 focus-visible:ring-fl-blue-700"
+            aria-label="FixLoop — go to overview"
+          >
+            <div
+              className="h-8 w-8 rounded-lg flex items-center justify-center text-white text-xs font-bold"
+              style={{ backgroundColor: "var(--fl-blue-700)" }}
+            >
+              FL
             </div>
             <div>
-              <span className="font-bold text-base tracking-tight text-white">FixLoop</span>
-              <span className="text-[10px] text-slate-400 block -mt-1 font-mono">Precision QMS</span>
+              <div className="font-bold text-sm leading-tight" style={{ color: "var(--fl-text)" }}>
+                FixLoop
+              </div>
+              <div className="text-[10px] font-mono" style={{ color: "var(--fl-text-muted)" }}>
+                Precision QMS
+              </div>
             </div>
           </Link>
         </div>
 
-        {/* Tenant Scope Card */}
-        <div className="p-4 border-b border-slate-800/60 bg-slate-900/40">
-          <div className="flex items-center gap-2 text-xs text-slate-400 mb-1">
-            <Layers className="h-3.5 w-3.5 text-blue-400" />
-            <span className="font-medium uppercase tracking-wider text-[10px]">Active Tenant</span>
+        {/* Tenant context — design.md §6 show current workspace */}
+        <div
+          className="px-5 py-3.5 shrink-0"
+          style={{ borderBottom: "1px solid var(--fl-border)", backgroundColor: "var(--fl-blue-050)" }}
+        >
+          <div className="flex items-center gap-1.5 mb-1">
+            <Layers className="h-3.5 w-3.5 shrink-0" style={{ color: "var(--fl-blue-700)" }} aria-hidden="true" />
+            <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--fl-text-muted)" }}>
+              Workspace
+            </span>
           </div>
-          <div className="font-semibold text-sm text-white truncate">
+          <div className="text-sm font-semibold truncate" style={{ color: "var(--fl-text)" }}>
             {membership.tenantName}
           </div>
-          <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-[11px] font-mono font-medium ${roleMeta.color}">
-            <Shield className="h-3 w-3" />
+          <div
+            className="mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold font-mono"
+            style={{
+              backgroundColor: "var(--fl-blue-100)",
+              color: "var(--fl-blue-900)",
+              border: "1px solid var(--fl-blue-600)",
+            }}
+          >
+            <Shield className="h-3 w-3" aria-hidden="true" />
             {roleMeta.label}
           </div>
         </div>
 
-        {/* Action Button: Report Defect */}
-        <div className="px-4 pt-4">
+        {/* Report defect CTA */}
+        <div className="px-5 py-3.5 shrink-0">
           <Link
             href="/app/cases/new"
-            className="w-full py-2.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs shadow-md shadow-blue-600/20 transition-all flex items-center justify-center gap-2"
+            id="sidebar-report-defect"
+            className="w-full py-2.5 px-4 rounded-lg text-white font-semibold text-xs flex items-center justify-center gap-2 transition-colors hover:bg-[var(--fl-blue-800)] shadow-sm"
+            style={{ backgroundColor: "var(--fl-blue-700)" }}
           >
-            <Plus className="h-4 w-4" />
-            Report Nonconformance
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            Report nonconformance
           </Link>
         </div>
 
-        {/* Navigation Links */}
-        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-          <div className="px-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 font-mono">
+        {/* Navigation links */}
+        <nav
+          className="flex-1 overflow-y-auto px-3 py-2 space-y-0.5"
+          aria-label="Main navigation"
+        >
+          <div
+            className="px-2 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider"
+            style={{ color: "var(--fl-text-muted)" }}
+          >
             Navigation
           </div>
           {navLinks.map((item) => {
             const Icon = item.icon;
-            const isActive = pathname === item.href || (item.href !== "/app" && pathname.startsWith(item.href));
+            const active = isNavActive(item.href);
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all ${
-                  isActive
-                    ? "bg-blue-600/15 text-blue-400 border border-blue-500/30"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/60"
+                aria-current={active ? "page" : undefined}
+                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  active ? "" : "hover:bg-[var(--fl-blue-050)]"
                 }`}
+                style={{
+                  backgroundColor: active ? "var(--fl-blue-100)" : "transparent",
+                  color: active ? "var(--fl-blue-900)" : "var(--fl-text-muted)",
+                }}
               >
-                <div className="flex items-center gap-2.5">
-                  <Icon className={`h-4 w-4 ${isActive ? "text-blue-400" : "text-slate-400"}`} />
-                  <span>{item.label}</span>
-                </div>
-                {isActive && <ChevronRight className="h-3.5 w-3.5 text-blue-400" />}
+                <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                {item.label}
               </Link>
             );
           })}
 
-          {/* Admin section if TENANT_ADMIN */}
+          {/* Admin section */}
           {membership.role === "TENANT_ADMIN" && (
-            <div className="pt-4 space-y-1">
-              <div className="px-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 font-mono">
+            <div className="pt-3 space-y-0.5">
+              <div
+                className="px-2 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider"
+                style={{ color: "var(--fl-text-muted)" }}
+              >
                 Administration
               </div>
               {adminLinks.map((item) => {
                 const Icon = item.icon;
-                const isActive = pathname.startsWith(item.href);
+                const active = pathname.startsWith(item.href);
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all ${
-                      isActive
-                        ? "bg-emerald-600/15 text-emerald-400 border border-emerald-500/30"
-                        : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/60"
+                    aria-current={active ? "page" : undefined}
+                    className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                      active ? "" : "hover:bg-[var(--fl-blue-050)]"
                     }`}
+                    style={{
+                      backgroundColor: active ? "var(--fl-blue-100)" : "transparent",
+                      color: active ? "var(--fl-blue-900)" : "var(--fl-text-muted)",
+                    }}
                   >
-                    <div className="flex items-center gap-2.5">
-                      <Icon className={`h-4 w-4 ${isActive ? "text-emerald-400" : "text-slate-400"}`} />
-                      <span>{item.label}</span>
-                    </div>
-                    {isActive && <ChevronRight className="h-3.5 w-3.5 text-emerald-400" />}
+                    <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    {item.label}
                   </Link>
                 );
               })}
             </div>
           )}
-        </div>
+        </nav>
 
-        {/* User Card & Logout */}
-        <div className="p-3 border-t border-slate-800/80 bg-slate-900/50 flex items-center justify-between">
-          <div className="min-w-0 pr-2">
-            <div className="font-semibold text-xs text-white truncate">
-              {user.displayName || user.email.split("@")[0]}
+        {/* User + logout */}
+        <div
+          className="p-3.5 flex items-center justify-between shrink-0"
+          style={{ borderTop: "1px solid var(--fl-border)", backgroundColor: "var(--fl-surface)" }}
+        >
+          <div className="flex items-center gap-2.5 min-w-0 pr-2">
+            <div
+              className="h-8 w-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0"
+              style={{ backgroundColor: "var(--fl-blue-100)", color: "var(--fl-blue-900)" }}
+            >
+              {(user.displayName || user.email)[0].toUpperCase()}
             </div>
-            <div className="text-[11px] text-slate-400 truncate">{user.email}</div>
+            <div className="min-w-0">
+              <div className="text-xs font-semibold truncate" style={{ color: "var(--fl-text)" }}>
+                {user.displayName || user.email.split("@")[0]}
+              </div>
+              <div className="text-[11px] truncate font-mono" style={{ color: "var(--fl-text-muted)" }}>
+                {user.email}
+              </div>
+            </div>
           </div>
           <button
             onClick={handleLogout}
             disabled={isLoggingOut}
             title="Sign out"
-            className="p-2 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-950/40 transition-colors"
+            aria-label="Sign out"
+            className="p-2 rounded-lg transition-colors hover:bg-red-50 hover:text-[var(--fl-danger)] shrink-0"
+            style={{ color: "var(--fl-text-muted)" }}
           >
-            <LogOut className="h-4 w-4" />
+            <LogOut className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
       </aside>
 
-      {/* Main Content Area */}
+      {/* ================================================================
+          Main content area
+          ================================================================ */}
       <div className="flex-1 md:ml-64 flex flex-col min-h-screen">
-        {/* Mobile Top Bar */}
-        <header className="md:hidden h-14 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md px-4 flex items-center justify-between sticky top-0 z-30">
-          <Link href="/app" className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded-lg bg-blue-600 flex items-center justify-center">
-              <Cpu className="h-4 w-4 text-white" />
+
+        {/* Mobile top bar */}
+        <header
+          className="md:hidden h-14 px-4 flex items-center justify-between sticky top-0 z-30"
+          style={{
+            backgroundColor: "var(--fl-surface)",
+            borderBottom: "1px solid var(--fl-border)",
+          }}
+        >
+          <Link href="/app" className="flex items-center gap-2" aria-label="FixLoop overview">
+            <div
+              className="h-7 w-7 rounded-lg flex items-center justify-center text-white text-xs font-bold"
+              style={{ backgroundColor: "var(--fl-blue-700)" }}
+            >
+              FL
             </div>
-            <span className="font-bold text-sm text-white">FixLoop</span>
+            <span className="font-bold text-sm" style={{ color: "var(--fl-text)" }}>FixLoop</span>
           </Link>
 
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full border border-slate-700 bg-slate-800 text-slate-300">
-              {membership.role}
+            <span
+              className="text-[10px] font-mono px-2 py-0.5 rounded-full"
+              style={{
+                backgroundColor: "var(--fl-blue-100)",
+                color: "var(--fl-blue-900)",
+                border: "1px solid var(--fl-blue-600)",
+              }}
+            >
+              {roleMeta.label}
             </span>
             <button
               onClick={handleLogout}
-              className="p-1.5 text-slate-400 hover:text-red-400"
+              aria-label="Sign out"
+              className="p-1.5 rounded-lg transition-colors"
+              style={{ color: "var(--fl-text-muted)" }}
             >
-              <LogOut className="h-4 w-4" />
+              <LogOut className="h-4 w-4" aria-hidden="true" />
             </button>
           </div>
         </header>
 
-        {/* Page Container */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-20 md:pb-8 max-w-7xl w-full mx-auto">
+        {/* Page container */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-20 md:pb-8 max-w-[1440px] w-full mx-auto">
           {children}
         </main>
 
-        {/* Mobile Bottom Navigation */}
+        {/* Mobile bottom navigation */}
         <MobileNav />
       </div>
     </div>

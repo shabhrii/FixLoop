@@ -8,7 +8,8 @@ export const metadata: Metadata = {
     default: "FixLoop — Precision Manufacturing Defect Investigation",
     template: "%s | FixLoop Precision QMS",
   },
-  description: "Mobile-first defect-investigation, root cause analysis and proof-backed corrective action workflow for precision manufacturing.",
+  description:
+    "Mobile-first defect-investigation, root cause analysis and proof-backed corrective action workflow for precision manufacturing.",
   icons: {
     icon: [
       { url: "/icon.svg", type: "image/svg+xml" },
@@ -18,7 +19,8 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "FixLoop — Precision Manufacturing Defect Investigation",
-    description: "Mobile-first defect-investigation, root cause analysis and proof-backed corrective action workflow for precision manufacturing.",
+    description:
+      "Mobile-first defect-investigation, root cause analysis and proof-backed corrective action workflow for precision manufacturing.",
     url: "/",
     siteName: "FixLoop",
     images: [
@@ -35,7 +37,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "FixLoop — Precision Manufacturing Defect Investigation",
-    description: "Mobile-first defect-investigation, root cause analysis and proof-backed corrective action workflow for precision manufacturing.",
+    description:
+      "Mobile-first defect-investigation, root cause analysis and proof-backed corrective action workflow for precision manufacturing.",
     images: ["/og-image.png"],
   },
 };
@@ -43,9 +46,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
-  themeColor: "#090d16",
+  maximumScale: 5, // Allow pinch zoom — accessibility requirement design.md §10
+  themeColor: "#2F5F91", // fl-blue-700 per design.md §3
 };
 
 export default function RootLayout({
@@ -54,8 +56,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
-      <body className="antialiased selection:bg-blue-600 selection:text-white">
+    // No `dark` class — design.md uses light surfaces
+    <html lang="en">
+      <body className="antialiased">
         {children}
         <CookieConsentBanner />
       </body>

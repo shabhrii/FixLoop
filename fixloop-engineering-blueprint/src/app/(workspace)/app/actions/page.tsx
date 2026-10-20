@@ -5,10 +5,7 @@ import {
   CheckSquare,
   Clock,
   User,
-  AlertTriangle,
   ArrowRight,
-  CheckCircle2,
-  AlertOctagon,
   FileCheck,
 } from "lucide-react";
 
@@ -71,16 +68,16 @@ export default async function ActionsQueuePage({ searchParams }: ActionsPageProp
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-extrabold text-white tracking-tight">
+        <h1 className="text-2xl font-extrabold text-[#17212F] tracking-tight">
           Corrective Actions & Proof Queue
         </h1>
-        <p className="text-xs text-slate-400 mt-0.5">
+        <p className="text-xs text-[#526173] mt-0.5">
           Assign, execute, and verify physical containment and root-cause countermeasures before case closure.
         </p>
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-b border-slate-800">
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-b border-[#D8E0E9]">
         {STATUS_TABS.map((tab) => {
           const isActive =
             tab.mine === "true"
@@ -97,10 +94,10 @@ export default async function ActionsQueuePage({ searchParams }: ActionsPageProp
             <Link
               key={tab.label}
               href={href}
-              className={`px-3.5 py-2 rounded-xl text-xs font-medium whitespace-nowrap transition-all ${
+              className={`px-3.5 py-2 rounded-xl text-xs whitespace-nowrap transition-all ${
                 isActive
-                  ? "bg-cyan-600/15 text-cyan-400 border border-cyan-500/30"
-                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/60"
+                  ? "bg-[#E7EFF7] text-[#2F5F91] border border-[#2F5F91]/20 font-semibold"
+                  : "text-[#526173] hover:text-[#17212F] hover:bg-slate-100 font-medium"
               }`}
             >
               {tab.label}
@@ -112,10 +109,10 @@ export default async function ActionsQueuePage({ searchParams }: ActionsPageProp
       {/* Action Cards Grid */}
       <div className="space-y-3">
         {actions.length === 0 ? (
-          <div className="py-16 text-center text-slate-500 rounded-2xl bg-slate-900/40 border border-slate-800">
-            <CheckSquare className="h-10 w-10 mx-auto mb-3 text-slate-600" />
-            <h3 className="text-sm font-semibold text-slate-300">No action tasks found</h3>
-            <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+          <div className="py-16 text-center text-[#526173] rounded-2xl bg-white border border-[#D8E0E9]">
+            <CheckSquare className="h-10 w-10 mx-auto mb-3 text-slate-400" />
+            <h3 className="text-sm font-semibold text-[#17212F]">No action tasks found</h3>
+            <p className="text-xs text-[#526173] mt-1 max-w-sm mx-auto">
               All assigned actions have been resolved or no tasks match your current filter.
             </p>
           </div>
@@ -129,50 +126,50 @@ export default async function ActionsQueuePage({ searchParams }: ActionsPageProp
                 key={a.id}
                 className={`p-5 rounded-2xl border transition-all ${
                   isCompleted
-                    ? "bg-slate-950/40 border-slate-800"
+                    ? "bg-[#F7F9FC] border-[#D8E0E9]"
                     : isOverdue
-                    ? "bg-red-950/15 border-red-800/60 shadow-lg shadow-red-500/5"
-                    : "bg-slate-900/60 border-slate-800"
+                    ? "bg-red-50/70 border-red-200 shadow-sm"
+                    : "bg-white border-[#D8E0E9] shadow-sm hover:border-[#2F5F91]/40"
                 }`}
               >
                 <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs font-bold text-blue-400">
+                    <span className="font-mono text-xs font-bold text-[#2F5F91]">
                       {a.case.caseNumber}
                     </span>
-                    <span className="text-slate-600">•</span>
-                    <span className="px-2 py-0.5 rounded-full border text-[10px] font-mono font-semibold bg-cyan-950/60 text-cyan-300 border-cyan-700/60">
+                    <span className="text-slate-400">•</span>
+                    <span className="px-2 py-0.5 rounded-full border text-[10px] font-mono font-semibold bg-[#E7EFF7] text-[#245B86] border-[#D8E0E9]">
                       {a.actionType}
                     </span>
                     <span className={`px-2 py-0.5 rounded-full border text-[10px] font-mono font-medium ${
                       isCompleted
-                        ? "bg-emerald-950/60 text-emerald-300 border-emerald-700/60"
-                        : "bg-slate-800 text-slate-300 border-slate-700"
+                        ? "bg-emerald-50 text-[#216E4A] border-emerald-200"
+                        : "bg-slate-100 text-[#17212F] border-slate-200"
                     }`}>
                       {a.status}
                     </span>
                   </div>
 
                   <div className="flex items-center gap-2 text-xs font-mono">
-                    <Clock className={`h-3.5 w-3.5 ${isOverdue ? "text-red-400" : "text-slate-500"}`} />
-                    <span className={isOverdue ? "text-red-400 font-bold" : "text-slate-400"}>
+                    <Clock className={`h-3.5 w-3.5 ${isOverdue ? "text-[#B42318]" : "text-slate-400"}`} />
+                    <span className={isOverdue ? "text-[#B42318] font-bold" : "text-[#526173]"}>
                       Due {new Date(a.dueAt).toLocaleDateString()}
                     </span>
                   </div>
                 </div>
 
-                <h3 className="text-sm font-semibold text-white mb-1">
+                <h3 className="text-sm font-semibold text-[#17212F] mb-1">
                   {a.description}
                 </h3>
 
-                <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-800/80 mt-3 text-xs text-slate-400">
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#D8E0E9] mt-3 text-xs text-[#526173]">
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-1.5">
-                      <User className="h-3.5 w-3.5 text-slate-500" />
+                      <User className="h-3.5 w-3.5 text-slate-400" />
                       <span>{a.assignee.displayName || a.assignee.email}</span>
                     </div>
                     {a.proofLinks.length > 0 && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-mono text-emerald-400">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-mono text-[#216E4A] font-semibold">
                         <FileCheck className="h-3 w-3" /> Proof attached
                       </span>
                     )}
@@ -180,7 +177,7 @@ export default async function ActionsQueuePage({ searchParams }: ActionsPageProp
 
                   <Link
                     href={`/app/cases/${a.case.id}`}
-                    className="text-xs font-semibold text-blue-400 hover:text-blue-300 flex items-center gap-1"
+                    className="text-xs font-semibold text-[#2F5F91] hover:text-[#214B78] flex items-center gap-1"
                   >
                     Open Case Details
                     <ArrowRight className="h-3.5 w-3.5" />

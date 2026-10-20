@@ -68,7 +68,7 @@ export function EffectivenessForm({
             sampleSize: n,
             outOfToleranceCount: failures,
             outcome,
-            notes: notes.trim() || undefined,
+            reviewerComment: notes.trim() || undefined,
             evidenceIds: evidenceId ? [evidenceId] : [],
           }),
         }
@@ -89,38 +89,38 @@ export function EffectivenessForm({
   };
 
   return (
-    <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 backdrop-blur-sm space-y-4">
+    <div className="p-6 rounded-2xl bg-white border border-[#D8E0E9] shadow-sm space-y-4">
       <div className="flex items-center gap-2.5">
-        <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400">
+        <div className="p-2.5 rounded-xl bg-emerald-50 text-[#216E4A]">
           <ShieldCheck className="h-5 w-5" />
         </div>
         <div>
-          <h3 className="text-base font-bold text-white tracking-tight">
+          <h3 className="text-base font-bold text-[#17212F] tracking-tight">
             Record Statistical Effectiveness Review
           </h3>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-[#526173]">
             A case cannot be closed until a human Quality Engineer logs an EFFECTIVE verification check.
           </p>
         </div>
       </div>
 
       {errorMessage && (
-        <div className="p-3 rounded-xl bg-red-950/60 border border-red-700/60 flex items-center gap-2 text-xs text-red-300">
-          <AlertCircle className="h-4 w-4 shrink-0 text-red-400" />
+        <div className="p-3 rounded-xl bg-red-50 border border-red-200 flex items-center gap-2 text-xs text-[#B42318]">
+          <AlertCircle className="h-4 w-4 shrink-0 text-[#B42318]" />
           <span>{errorMessage}</span>
         </div>
       )}
 
       {successMessage && (
-        <div className="p-3 rounded-xl bg-emerald-950/60 border border-emerald-700/60 flex items-center gap-2 text-xs text-emerald-300">
-          <CheckCircle className="h-4 w-4 shrink-0 text-emerald-400" />
+        <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center gap-2 text-xs text-[#216E4A]">
+          <CheckCircle className="h-4 w-4 shrink-0 text-[#216E4A]" />
           <span>{successMessage}</span>
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4 pt-2">
         <div>
-          <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+          <label className="block text-[11px] font-semibold text-[#526173] uppercase tracking-wider mb-1">
             Verification Criterion *
           </label>
           <input
@@ -129,13 +129,13 @@ export function EffectivenessForm({
             onChange={(e) => setCriterion(e.target.value)}
             placeholder="e.g. Zero bore runout across next 30 consecutive machined parts"
             disabled={isLoading}
-            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#D8E0E9] text-xs text-[#17212F] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#2F5F91]"
           />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
-            <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+            <label className="block text-[11px] font-semibold text-[#526173] uppercase tracking-wider mb-1">
               Sample Size *
             </label>
             <input
@@ -144,12 +144,12 @@ export function EffectivenessForm({
               value={sampleSize}
               onChange={(e) => setSampleSize(e.target.value)}
               disabled={isLoading}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-xs text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#D8E0E9] text-xs text-[#17212F] focus:outline-none focus:ring-2 focus:ring-[#2F5F91]"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+            <label className="block text-[11px] font-semibold text-[#526173] uppercase tracking-wider mb-1">
               Out of Tolerance Count *
             </label>
             <input
@@ -158,19 +158,19 @@ export function EffectivenessForm({
               value={outOfToleranceCount}
               onChange={(e) => setOutOfToleranceCount(e.target.value)}
               disabled={isLoading}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-xs text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#D8E0E9] text-xs text-[#17212F] focus:outline-none focus:ring-2 focus:ring-[#2F5F91]"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+            <label className="block text-[11px] font-semibold text-[#526173] uppercase tracking-wider mb-1">
               Determination Outcome *
             </label>
             <select
               value={outcome}
               onChange={(e) => setOutcome(e.target.value as EffectivenessOutcome)}
               disabled={isLoading}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-xs text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#D8E0E9] text-xs text-[#17212F] focus:outline-none focus:ring-2 focus:ring-[#2F5F91]"
             >
               <option value="EFFECTIVE">EFFECTIVE (Fix proven successful)</option>
               <option value="NOT_EFFECTIVE">NOT EFFECTIVE (Recurrence observed)</option>
@@ -180,14 +180,14 @@ export function EffectivenessForm({
         </div>
 
         <div>
-          <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+          <label className="block text-[11px] font-semibold text-[#526173] uppercase tracking-wider mb-1">
             Corroborating Evidence File
           </label>
           <select
             value={evidenceId}
             onChange={(e) => setEvidenceId(e.target.value)}
             disabled={isLoading}
-            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-xs text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#D8E0E9] text-xs text-[#17212F] focus:outline-none focus:ring-2 focus:ring-[#2F5F91]"
           >
             <option value="">None / Note verification</option>
             {availableEvidence.map((ev) => (
@@ -199,7 +199,7 @@ export function EffectivenessForm({
         </div>
 
         <div>
-          <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
+          <label className="block text-[11px] font-semibold text-[#526173] uppercase tracking-wider mb-1">
             Engineering Inspection Notes
           </label>
           <textarea
@@ -208,7 +208,7 @@ export function EffectivenessForm({
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Details of measurement equipment, calibration certificate, or operator observations..."
             disabled={isLoading}
-            className="w-full px-3.5 py-2 rounded-xl bg-slate-950/80 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full px-3.5 py-2 rounded-xl bg-white border border-[#D8E0E9] text-xs text-[#17212F] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#2F5F91]"
           />
         </div>
 
@@ -216,7 +216,7 @@ export function EffectivenessForm({
           <button
             type="submit"
             disabled={isLoading || !criterion.trim()}
-            className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-lg shadow-emerald-600/20 transition-all flex items-center gap-1.5 disabled:opacity-50"
+            className="px-5 py-2.5 rounded-xl bg-[#216E4A] hover:bg-[#1a573a] text-white text-xs font-semibold shadow-sm transition-all flex items-center gap-1.5 disabled:opacity-50"
           >
             {isLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileCheck className="h-3.5 w-3.5" />}
             Record Effectiveness Check

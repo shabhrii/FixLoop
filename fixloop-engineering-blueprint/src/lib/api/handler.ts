@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { DomainError } from "@/lib/errors/domain-error";
 import { ZodError } from "zod";
 
+if (typeof BigInt !== "undefined" && !(BigInt.prototype as any).toJSON) {
+  (BigInt.prototype as any).toJSON = function () {
+    return Number(this);
+  };
+}
+
 export function handleApiError(err: unknown) {
   if (err instanceof DomainError) {
     return NextResponse.json(
