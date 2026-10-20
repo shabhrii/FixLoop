@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   Cpu,
   Shield,
@@ -61,10 +62,33 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [botField, setBotField] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  const validateEmailFormat = (val: string) => {
+    const trimmed = val.trim();
+    if (!trimmed) return "Please enter your work email address.";
+    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+    if (!emailRegex.test(trimmed)) {
+      return "Please enter a valid work email address (e.g. name@company.com).";
+    }
+    return null;
+  };
+
   const handleLogin = async (loginEmail: string) => {
+    const emailError = validateEmailFormat(loginEmail);
+    if (emailError) {
+      setErrorMessage(emailError);
+      return;
+    }
+
+    // Client honeypot check
+    if (botField.trim() !== "") {
+      setErrorMessage("Automated submission detected.");
+      return;
+    }
+
     setIsLoading(true);
     setErrorMessage(null);
 
@@ -72,7 +96,11 @@ export default function LoginPage() {
       const res = await fetch("/api/v1/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: loginEmail, password }),
+        body: JSON.stringify({
+          email: loginEmail.trim(),
+          password,
+          bot_field: botField,
+        }),
       });
 
       const data = await res.json();
@@ -91,10 +119,6 @@ export default function LoginPage() {
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) {
-      setErrorMessage("Please enter an email address.");
-      return;
-    }
     handleLogin(email);
   };
 
@@ -161,6 +185,20 @@ export default function LoginPage() {
               />
             </div>
 
+            {/* Spam Honeypot Field (Offscreen / Hidden to humans) */}
+            <div className="sr-only" aria-hidden="true" style={{ display: "none" }}>
+              <label htmlFor="website_hp">Do not fill this field</label>
+              <input
+                id="website_hp"
+                type="text"
+                name="website_hp"
+                value={botField}
+                onChange={(e) => setBotField(e.target.value)}
+                tabIndex={-1}
+                autoComplete="off"
+              />
+            </div>
+
             <button
               type="submit"
               disabled={isLoading}
@@ -182,7 +220,7 @@ export default function LoginPage() {
         </div>
 
         {/* 1-Click Demo Persona Selector */}
-        <div className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800/80">
+        <div className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800/80 mb-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">
               Interactive Demo Personas
@@ -223,6 +261,21 @@ export default function LoginPage() {
               );
             })}
           </div>
+        </div>
+
+        {/* Legal & Compliance Footer Links */}
+        <div className="text-center text-xs text-slate-500 flex items-center justify-center gap-4">
+          <Link href="/privacy" className="hover:text-slate-400 transition-colors underline-offset-2 hover:underline">
+            Privacy Policy
+          </Link>
+          <span>•</span>
+          <Link href="/terms" className="hover:text-slate-400 transition-colors underline-offset-2 hover:underline">
+            Terms & Conditions
+          </Link>
+          <span>•</span>
+          <Link href="/" className="hover:text-slate-400 transition-colors underline-offset-2 hover:underline">
+            System Architecture
+          </Link>
         </div>
       </div>
     </div>

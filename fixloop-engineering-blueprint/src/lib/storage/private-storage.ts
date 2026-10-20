@@ -102,10 +102,22 @@ export const PrivateStorage = {
   },
 
   /**
+   * Resolves safe path and prevents directory traversal attacks.
+   */
+  resolveSafePath(objectKey: string): string {
+    const root = path.resolve(LOCAL_STORAGE_ROOT);
+    const resolved = path.resolve(root, objectKey);
+    if (!resolved.startsWith(root)) {
+      throw new Error("Path traversal forbidden");
+    }
+    return resolved;
+  },
+
+  /**
    * Saves uploaded bytes to private storage.
    */
   async writeBytes(objectKey: string, buffer: Buffer): Promise<void> {
-    const targetPath = path.join(LOCAL_STORAGE_ROOT, objectKey);
+    const targetPath = this.resolveSafePath(objectKey);
     await fs.mkdir(path.dirname(targetPath), { recursive: true });
     await fs.writeFile(targetPath, buffer);
   },
@@ -114,7 +126,7 @@ export const PrivateStorage = {
    * Reads bytes from private storage.
    */
   async readBytes(objectKey: string): Promise<Buffer> {
-    const targetPath = path.join(LOCAL_STORAGE_ROOT, objectKey);
+    const targetPath = this.resolveSafePath(objectKey);
     return await fs.readFile(targetPath);
   },
 

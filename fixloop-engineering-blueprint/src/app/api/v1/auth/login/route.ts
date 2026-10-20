@@ -3,16 +3,45 @@ import prisma from "@/lib/db/prisma";
 import { createSessionToken } from "@/lib/auth/session";
 import { handleApiError } from "@/lib/api/handler";
 import { z } from "zod";
+import { checkRateLimit, extractClientIp } from "@/lib/security/rate-limiter";
 
 const LoginSchema = z.object({
-  email: z.string().email(),
+  email: z.string().trim().email("Please provide a valid email address"),
   password: z.string().optional(),
+  bot_field: z.string().max(0, "Automated submission detected").optional().default(""),
 });
 
 export async function POST(req: NextRequest) {
   try {
+    // 1. IP Rate Limiting (defense against automated credential stuffing)
+    const clientIp = extractClientIp(req);
+    const rateResult = checkRateLimit(clientIp, 15, 60);
+    if (!rateResult.success) {
+      return NextResponse.json(
+        {
+          error: {
+            code: "RATE_LIMIT_EXCEEDED",
+            message: `Too many sign-in attempts. Please retry in ${rateResult.resetSeconds} seconds.`,
+          },
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": rateResult.resetSeconds.toString(),
+          },
+        }
+      );
+    }
+
     const body = await req.json();
-    const { email } = LoginSchema.parse(body);
+    const { email, bot_field } = LoginSchema.parse(body);
+
+    if (bot_field && bot_field.length > 0) {
+      return NextResponse.json(
+        { error: { code: "SPAM_DETECTED", message: "Automated submission rejected" } },
+        { status: 400 }
+      );
+    }
 
     // Find user by email
     const user = await prisma.user.findUnique({

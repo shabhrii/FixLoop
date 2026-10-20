@@ -100,4 +100,33 @@ describe("Validation Schemas Unit Tests", () => {
       expect(result.success).toBe(false);
     });
   });
+
+  describe("Spam Protection & Honeypot Validation", () => {
+    it("rejects case intake if honeypot bot_field is populated", () => {
+      const botSubmission = {
+        siteId: "site-123",
+        title: "Legitimate looking title",
+        description: "Legitimate looking defect description for testing",
+        severity: "LOW",
+        bot_field: "http://spam-link.ru",
+      };
+      const result = CreateCaseSchema.safeParse(botSubmission);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.errors[0].message).toContain("Automated submission detected");
+      }
+    });
+
+    it("accepts case intake when bot_field is empty or omitted", () => {
+      const humanSubmission = {
+        siteId: "site-123",
+        title: "Legitimate looking title",
+        description: "Legitimate looking defect description for testing",
+        severity: "LOW",
+        bot_field: "",
+      };
+      const result = CreateCaseSchema.safeParse(humanSubmission);
+      expect(result.success).toBe(true);
+    });
+  });
 });

@@ -32,13 +32,22 @@ export function CaseIntakeForm({ tenantId, sites }: CaseIntakeFormProps) {
   const [unit, setUnit] = useState("mm");
   const [quantityInspected, setQuantityInspected] = useState<string>("");
   const [quantityAffected, setQuantityAffected] = useState<string>("");
+  const [botField, setBotField] = useState("");
 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const handleSubmit = async (isDraft: boolean) => {
+    // Client honeypot check
+    if (botField.trim() !== "") {
+      setErrorMessage("Automated submission detected.");
+      return;
+    }
+
     setIsLoading(true);
     setErrorMessage(null);
+    setFieldErrors({});
 
     const payload = {
       siteId,
@@ -55,12 +64,21 @@ export function CaseIntakeForm({ tenantId, sites }: CaseIntakeFormProps) {
       quantityInspected: quantityInspected !== "" ? parseInt(quantityInspected, 10) : null,
       quantityAffected: quantityAffected !== "" ? parseInt(quantityAffected, 10) : null,
       isDraft,
+      bot_field: botField,
     };
 
     // Client validation
     const validation = CreateCaseSchema.safeParse(payload);
     if (!validation.success) {
-      setErrorMessage(validation.error.errors[0]?.message || "Validation failed");
+      const errMap: Record<string, string> = {};
+      for (const err of validation.error.errors) {
+        const key = err.path.join(".");
+        if (!errMap[key]) {
+          errMap[key] = err.message;
+        }
+      }
+      setFieldErrors(errMap);
+      setErrorMessage(validation.error.errors[0]?.message || "Validation failed. Please review the highlighted fields.");
       setIsLoading(false);
       return;
     }
@@ -154,11 +172,19 @@ export function CaseIntakeForm({ tenantId, sites }: CaseIntakeFormProps) {
           <input
             type="text"
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              if (fieldErrors.title) setFieldErrors((prev) => ({ ...prev, title: "" }));
+            }}
             placeholder="e.g. Bore diameter undersized by 0.04mm on Bearing Housing"
             disabled={isLoading}
-            className="w-full px-4 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={`w-full px-4 py-2.5 rounded-xl bg-slate-950/80 border text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              fieldErrors.title ? "border-red-500 focus:ring-red-500" : "border-slate-800"
+            }`}
           />
+          {fieldErrors.title && (
+            <p className="mt-1 text-xs text-red-400 font-medium">{fieldErrors.title}</p>
+          )}
         </div>
 
         <div>
@@ -168,11 +194,19 @@ export function CaseIntakeForm({ tenantId, sites }: CaseIntakeFormProps) {
           <textarea
             rows={4}
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            onChange={(e) => {
+              setDescription(e.target.value);
+              if (fieldErrors.description) setFieldErrors((prev) => ({ ...prev, description: "" }));
+            }}
             placeholder="Describe what was observed, machine state, tooling conditions, and initial containment actions taken..."
             disabled={isLoading}
-            className="w-full px-4 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={`w-full px-4 py-2.5 rounded-xl bg-slate-950/80 border text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              fieldErrors.description ? "border-red-500 focus:ring-red-500" : "border-slate-800"
+            }`}
           />
+          {fieldErrors.description && (
+            <p className="mt-1 text-xs text-red-400 font-medium">{fieldErrors.description}</p>
+          )}
         </div>
 
         {/* Manufacturing Identifiers */}
@@ -291,12 +325,34 @@ export function CaseIntakeForm({ tenantId, sites }: CaseIntakeFormProps) {
               type="number"
               min="0"
               value={quantityAffected}
-              onChange={(e) => setQuantityAffected(e.target.value)}
+              onChange={(e) => {
+                setQuantityAffected(e.target.value);
+                if (fieldErrors.quantityAffected) setFieldErrors((prev) => ({ ...prev, quantityAffected: "" }));
+              }}
               placeholder="e.g. 8"
               disabled={isLoading}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                fieldErrors.quantityAffected ? "border-red-500 focus:ring-red-500" : "border-slate-800"
+              }`}
             />
+            {fieldErrors.quantityAffected && (
+              <p className="mt-1 text-xs text-red-400 font-medium">{fieldErrors.quantityAffected}</p>
+            )}
           </div>
+        </div>
+
+        {/* Spam Honeypot Field */}
+        <div className="sr-only" aria-hidden="true" style={{ display: "none" }}>
+          <label htmlFor="case_hp">Do not fill this field</label>
+          <input
+            id="case_hp"
+            type="text"
+            name="case_hp"
+            value={botField}
+            onChange={(e) => setBotField(e.target.value)}
+            tabIndex={-1}
+            autoComplete="off"
+          />
         </div>
 
         {/* Action Buttons */}

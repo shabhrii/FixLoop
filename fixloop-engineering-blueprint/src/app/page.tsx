@@ -146,8 +146,21 @@ export default async function LandingPage() {
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 border-t border-slate-900/80 py-8 px-6 text-center text-xs text-slate-500">
-        <p>FixLoop Engineering Platform • Multi-Tenant Precision Quality Management System</p>
+      <footer className="relative z-10 border-t border-slate-900/80 py-8 px-6 text-xs text-slate-500">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p>FixLoop Engineering Platform • Multi-Tenant Precision Quality Management System</p>
+          <div className="flex items-center gap-6">
+            <Link href="/privacy" className="hover:text-slate-300 transition-colors">
+              Privacy Policy
+            </Link>
+            <Link href="/terms" className="hover:text-slate-300 transition-colors">
+              Terms & Conditions
+            </Link>
+            <Link href="/login" className="hover:text-slate-300 transition-colors">
+              Sign In
+            </Link>
+          </div>
+        </div>
       </footer>
     </div>
   );

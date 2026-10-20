@@ -252,4 +252,50 @@ describe("Tenant Isolation and Case Lifecycle Integration Tests", () => {
     expect(eventNames).toContain("EFFECTIVENESS_REVIEWED");
     expect(eventNames).toContain("CASE_CLOSED");
   });
+
+  it("DENIES cross-tenant mutations: Tenant B cannot create actions, upload intents, or close Tenant A cases", async () => {
+    // Create case in Tenant A
+    const caseA = await CaseService.createCase(tenantAContext, {
+      siteId: tenantASiteId,
+      title: "Target Case for Cross-Tenant Mutation Attempt",
+      description: "Testing cross-tenant mutation denial across services",
+      severity: "MEDIUM",
+    });
+
+    // 1. Tenant B attempts to create action on Case A -> rejected
+    await expect(
+      ActionService.createAction(tenantBContext, caseA.id, {
+        actionType: "CONTAINMENT",
+        description: "Malicious cross-tenant action injection",
+        assigneeId: tenantBContext.user.id,
+        dueAt: new Date(Date.now() + 86400000),
+        isRequired: true,
+      })
+    ).rejects.toThrow("Case not found");
+
+    // 2. Tenant B attempts to create upload intent on Case A -> rejected
+    await expect(
+      EvidenceService.createUploadIntent(tenantBContext, caseA.id, {
+        fileName: "malicious_file.png",
+        fileType: "image/png",
+        fileSize: 1024,
+        evidenceType: "DEFECT_PHOTO",
+      })
+    ).rejects.toThrow("Case not found");
+
+    // 3. Tenant B attempts to close Case A -> rejected
+    await expect(
+      CaseService.closeCase(tenantBContext, caseA.id, caseA.version)
+    ).rejects.toThrow("Case not found");
+  });
+
+  it("DENIES cross-tenant discovery in closed-case library search", async () => {
+    const { SearchService } = await import("../../src/server/services/search-service");
+    // Search closed cases as Tenant B looking for Tenant A's closed case
+    const results = await SearchService.searchClosedCases(tenantBContext, {
+      partNumber: "PART-VAL-900",
+    });
+
+    expect(results.length).toBe(0);
+  });
 });

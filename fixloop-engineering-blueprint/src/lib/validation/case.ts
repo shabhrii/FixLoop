@@ -15,6 +15,7 @@ export const CreateCaseSchema = z.object({
   quantityInspected: z.number().int().positive().optional().nullable(),
   quantityAffected: z.number().int().nonnegative().optional().nullable(),
   isDraft: z.boolean().optional().default(false),
+  bot_field: z.string().max(0, "Automated submission detected").optional().default(""),
 }).refine(
   (data) => {
     if (data.quantityInspected != null && data.quantityAffected != null) {

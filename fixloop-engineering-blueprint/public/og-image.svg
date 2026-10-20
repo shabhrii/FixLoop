@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#090D16" />
+      <stop offset="100%" stop-color="#0F172A" />
+    </linearGradient>
+    <linearGradient id="brand" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="50%" stop-color="#2563EB" />
+      <stop offset="100%" stop-color="#10B981" />
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="30%" r="50%">
+      <stop offset="0%" stop-color="#2563EB" stop-opacity="0.25" />
+      <stop offset="100%" stop-color="#090D16" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)" />
+  <rect width="1200" height="630" fill="url(#glow)" />
+  
+  <!-- Subtle Grid Accent -->
+  <g stroke="#1E293B" stroke-width="1" opacity="0.3">
+    <line x1="100" y1="0" x2="100" y2="630" />
+    <line x1="300" y1="0" x2="300" y2="630" />
+    <line x1="500" y1="0" x2="500" y2="630" />
+    <line x1="700" y1="0" x2="700" y2="630" />
+    <line x1="900" y1="0" x2="900" y2="630" />
+    <line x1="1100" y1="0" x2="1100" y2="630" />
+  </g>
+
+  <!-- Brand Emblem -->
+  <g transform="translate(100, 140)">
+    <rect width="90" height="90" rx="20" fill="#1E293B" stroke="#334155" stroke-width="2" />
+    <path d="M 30 25 L 60 25 C 68 25 74 31 74 39 C 74 47 68 53 60 53 L 38 53" fill="none" stroke="url(#brand)" stroke-width="6" stroke-linecap="round"/>
+    <path d="M 60 65 L 30 65 C 22 65 16 59 16 51 C 16 43 22 37 30 37 L 52 37" fill="none" stroke="url(#brand)" stroke-width="6" stroke-linecap="round"/>
+  </g>
+
+  <!-- Brand Typography -->
+  <text x="210" y="202" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="48" font-weight="800" fill="#FFFFFF" letter-spacing="-1">
+    FixLoop
+  </text>
+  <rect x="390" y="172" width="130" height="32" rx="16" fill="#1E3A8A" stroke="#3B82F6" stroke-width="1" />
+  <text x="455" y="193" font-family="monospace" font-size="13" font-weight="700" fill="#93C5FD" text-anchor="middle">
+    PRECISION QMS
+  </text>
+
+  <!-- Tagline -->
+  <text x="100" y="320" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="54" font-weight="900" fill="#FFFFFF" letter-spacing="-1.5">
+    Stop Defect Recurrence with
+  </text>
+  <text x="100" y="380" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="54" font-weight="900" fill="url(#brand)" letter-spacing="-1.5">
+    Proof-Backed Corrective Action
+  </text>
+
+  <!-- Subtitle -->
+  <text x="100" y="440" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="22" font-weight="400" fill="#94A3B8">
+    Mobile-First Manufacturing Nonconformance, 5-Why RCA &amp; Verification Workflow
+  </text>
+
+  <!-- Footer Specs -->
+  <g transform="translate(100, 530)">
+    <text x="0" y="0" font-family="monospace" font-size="14" fill="#64748B">
+      REPORT → TRIAGE → INVESTIGATE → ACT → VERIFY → CLOSE
+    </text>
+  </g>
+</svg>
