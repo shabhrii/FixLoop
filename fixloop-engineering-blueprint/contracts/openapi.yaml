@@ -1,0 +1,168 @@
+openapi: 3.1.0
+info:
+  title: FixLoop API
+  version: 1.0.0-draft
+  description: |
+    Proposed contract. Not implemented. All tenant-scoped operations require verified identity,
+    active tenant membership, object-level authorization, server-side validation and audit where applicable.
+servers:
+  - url: /api/v1
+security:
+  - sessionCookie: []
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: __Host-fixloop-session
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message, requestId]
+          properties:
+            code: {type: string}
+            message: {type: string}
+            requestId: {type: string}
+            details: {type: object, additionalProperties: true}
+    EvidenceInput:
+      type: object
+      required: [kind, filename, contentType, sizeBytes]
+      properties:
+        kind: {type: string, enum: [PHOTO, DOCUMENT, READING, OTHER]}
+        filename: {type: string, maxLength: 255}
+        contentType: {type: string, maxLength: 120}
+        sizeBytes: {type: integer, minimum: 1, maximum: 20971520}
+    CreateCase:
+      type: object
+      required: [siteId, title, description]
+      properties:
+        siteId: {type: string, format: uuid}
+        title: {type: string, minLength: 3, maxLength: 160}
+        description: {type: string, minLength: 1, maxLength: 5000}
+        partNumber: {type: [string, 'null'], maxLength: 100}
+        machineId: {type: [string, 'null'], maxLength: 100}
+        defectCategory: {type: [string, 'null'], maxLength: 80}
+        measurementValue: {type: [number, 'null']}
+        measurementUnit: {type: [string, 'null'], maxLength: 40}
+        specification: {type: [string, 'null'], maxLength: 300}
+        inspectedQuantity: {type: [integer, 'null'], minimum: 0}
+        affectedQuantity: {type: [integer, 'null'], minimum: 0}
+    CaseSummary:
+      type: object
+      required: [id, tenantId, siteId, title, status, version, createdAt]
+      properties:
+        id: {type: string, format: uuid}
+        tenantId: {type: string, format: uuid}
+        siteId: {type: string, format: uuid}
+        title: {type: string}
+        status: {type: string, enum: [DRAFT, SUBMITTED, TRIAGED, INVESTIGATING, ACTION_IN_PROGRESS, VERIFYING, CLOSED, REOPENED, CANCELLED]}
+        version: {type: integer, minimum: 1}
+        createdAt: {type: string, format: date-time}
+paths:
+  /healthz:
+    get:
+      security: []
+      summary: Liveness endpoint only
+      responses:
+        '200': {description: Process is alive}
+  /me:
+    get:
+      summary: Return authenticated user and allowed tenant memberships
+      responses:
+        '200': {description: Safe user DTO}
+        '401': {description: Unauthenticated, content: {application/json: {schema: {$ref: '#/components/schemas/Error'}}}}
+  /tenants/{tenantId}/sites:
+    parameters:
+      - {in: path, name: tenantId, required: true, schema: {type: string, format: uuid}}
+    get:
+      summary: List sites in authorized tenant
+      responses: {'200': {description: Site list}}
+    post:
+      summary: Create site (Tenant Admin)
+      requestBody: {required: true, content: {application/json: {schema: {type: object, required: [name], properties: {name: {type: string, minLength: 1, maxLength: 120}, code: {type: [string, 'null'], maxLength: 40}}}}}}
+      responses: {'201': {description: Created}, '403': {description: Insufficient capability}}
+  /tenants/{tenantId}/cases:
+    parameters:
+      - {in: path, name: tenantId, required: true, schema: {type: string, format: uuid}}
+    get:
+      summary: Search/list tenant-scoped cases
+      parameters:
+        - {in: query, name: status, schema: {type: string}}
+        - {in: query, name: cursor, schema: {type: string}}
+        - {in: query, name: limit, schema: {type: integer, minimum: 1, maximum: 100, default: 25}}
+      responses: {'200': {description: Case page}}
+    post:
+      summary: Create case draft
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/CreateCase'}}}}
+      responses: {'201': {description: Draft created, content: {application/json: {schema: {$ref: '#/components/schemas/CaseSummary'}}}}, '422': {description: Invalid input}}
+  /tenants/{tenantId}/cases/{caseId}:
+    parameters:
+      - {in: path, name: tenantId, required: true, schema: {type: string, format: uuid}}
+      - {in: path, name: caseId, required: true, schema: {type: string, format: uuid}}
+    get:
+      summary: Read case detail after tenant and object authorization
+      responses: {'200': {description: Authorized case detail}, '404': {description: Not found or not visible}}
+    patch:
+      summary: Update allow-listed case fields with optimistic concurrency
+      parameters:
+        - {in: header, name: If-Match, required: true, schema: {type: string}, description: Expected case version ETag}
+      responses: {'200': {description: Updated}, '409': {description: Concurrent update}}
+  /tenants/{tenantId}/cases/{caseId}/submit:
+    post:
+      summary: Submit draft; server evaluates required fields
+      parameters: [{in: path, name: tenantId, required: true, schema: {type: string, format: uuid}}, {in: path, name: caseId, required: true, schema: {type: string, format: uuid}}]
+      responses: {'200': {description: Submitted}, '409': {description: Invalid state}, '422': {description: Missing requirements}}
+  /tenants/{tenantId}/cases/{caseId}/triage:
+    post:
+      summary: Quality Engineer triage and assign priority/containment
+      parameters: [{in: path, name: tenantId, required: true, schema: {type: string, format: uuid}}, {in: path, name: caseId, required: true, schema: {type: string, format: uuid}}]
+      responses: {'200': {description: Triaged}, '403': {description: Not authorized}}
+  /tenants/{tenantId}/cases/{caseId}/close:
+    post:
+      summary: Close only when required actions are completed and effectiveness is approved
+      parameters: [{in: path, name: tenantId, required: true, schema: {type: string, format: uuid}}, {in: path, name: caseId, required: true, schema: {type: string, format: uuid}}]
+      responses: {'200': {description: Closed}, '409': {description: Closure guard failed}, '403': {description: Reviewer capability required}}
+  /tenants/{tenantId}/cases/{caseId}/reopen:
+    post:
+      summary: Reopen a case with a mandatory reason
+      parameters: [{in: path, name: tenantId, required: true, schema: {type: string, format: uuid}}, {in: path, name: caseId, required: true, schema: {type: string, format: uuid}}]
+      requestBody: {required: true, content: {application/json: {schema: {type: object, required: [reason], properties: {reason: {type: string, minLength: 5, maxLength: 1000}}}}}}
+      responses: {'200': {description: Reopened}, '422': {description: Reason missing}}
+  /tenants/{tenantId}/cases/{caseId}/evidence/upload-intents:
+    post:
+      summary: Create expiring private object upload intent
+      parameters: [{in: path, name: tenantId, required: true, schema: {type: string, format: uuid}}, {in: path, name: caseId, required: true, schema: {type: string, format: uuid}}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/EvidenceInput'}}}}
+      responses: {'201': {description: Upload intent with opaque evidence ID, object key and short-lived URL}}
+  /tenants/{tenantId}/cases/{caseId}/findings:
+    post:
+      summary: Create fact/hypothesis/tested finding; evidence references must be authorized
+      parameters: [{in: path, name: tenantId, required: true, schema: {type: string, format: uuid}}, {in: path, name: caseId, required: true, schema: {type: string, format: uuid}}]
+      responses: {'201': {description: Finding created}}
+  /tenants/{tenantId}/cases/{caseId}/actions:
+    post:
+      summary: Create corrective action with same-tenant owner and due date
+      parameters: [{in: path, name: tenantId, required: true, schema: {type: string, format: uuid}}, {in: path, name: caseId, required: true, schema: {type: string, format: uuid}}]
+      responses: {'201': {description: Action created}}
+  /tenants/{tenantId}/cases/{caseId}/effectiveness-checks:
+    post:
+      summary: Reviewer records sampling criteria, result, evidence and decision
+      parameters: [{in: path, name: tenantId, required: true, schema: {type: string, format: uuid}}, {in: path, name: caseId, required: true, schema: {type: string, format: uuid}}]
+      responses: {'201': {description: Verification stored}, '409': {description: Precondition failed}}
+  /tenants/{tenantId}/cases/{caseId}/ai-suggestions:
+    post:
+      summary: Enqueue constrained AI suggestion generation; output remains untrusted
+      parameters: [{in: path, name: tenantId, required: true, schema: {type: string, format: uuid}}, {in: path, name: caseId, required: true, schema: {type: string, format: uuid}}]
+      responses: {'202': {description: Suggestion job accepted}}
+  /tenants/{tenantId}/closed-cases/search:
+    get:
+      summary: Search closed cases within authorized tenant only
+      parameters:
+        - {in: path, name: tenantId, required: true, schema: {type: string, format: uuid}}
+        - {in: query, name: q, required: true, schema: {type: string, minLength: 2, maxLength: 200}}
+        - {in: query, name: limit, schema: {type: integer, minimum: 1, maximum: 50, default: 20}}
+      responses: {'200': {description: Paginated search results}}

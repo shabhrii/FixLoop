@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fixloop.invalid/contracts/ai-suggestion.schema.json",
+  "title": "FixLoop untrusted AI suggestion",
+  "description": "Candidate schema for model output. This document is not evidence and grants no workflow authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "titleSuggestion", "categorySuggestion", "summary", "findings", "possibleCauses", "missingInformation", "safetyNote"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "titleSuggestion": {"type": ["string", "null"], "maxLength": 120},
+    "categorySuggestion": {"type": ["string", "null"], "enum": ["DIMENSIONAL", "SURFACE", "MATERIAL", "ASSEMBLY", "PROCESS", "DOCUMENTATION", "SAFETY", "OTHER", null]},
+    "summary": {"type": "string", "maxLength": 1200},
+    "findings": {"type": "array", "maxItems": 12, "items": {"type": "object", "additionalProperties": false, "required": ["statement", "kind", "sourceEvidenceIds", "confidenceBand"], "properties": {"statement": {"type": "string", "minLength": 1, "maxLength": 500}, "kind": {"enum": ["FACT_CANDIDATE", "HYPOTHESIS"]}, "sourceEvidenceIds": {"type": "array", "maxItems": 10, "items": {"type": "string", "maxLength": 100}}, "confidenceBand": {"enum": ["LOW", "MEDIUM", "HIGH"]}}}},
+    "possibleCauses": {"type": "array", "maxItems": 8, "items": {"type": "object", "additionalProperties": false, "required": ["statement", "testToRun", "sourceEvidenceIds"], "properties": {"statement": {"type": "string", "minLength": 1, "maxLength": 500}, "testToRun": {"type": "string", "minLength": 1, "maxLength": 500}, "sourceEvidenceIds": {"type": "array", "maxItems": 10, "items": {"type": "string", "maxLength": 100}}}}},
+    "missingInformation": {"type": "array", "maxItems": 15, "items": {"type": "string", "maxLength": 300}},
+    "safetyNote": {"type": "string", "maxLength": 500}
+  }
+}

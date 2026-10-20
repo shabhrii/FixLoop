@@ -1,0 +1,30 @@
+# Environment / secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Dependencies / builds
+node_modules/
+.next/
+.out/
+dist/
+build/
+coverage/
+playwright-report/
+test-results/
+
+# Local artifacts / logs
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+
+# Local databases and customer evidence
+*.sqlite
+*.db
+.pgdata/
+local-evidence/
+uploads/
+reports-private/
