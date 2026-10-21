@@ -13,6 +13,7 @@ import { EvidenceUploader } from "@/components/cases/evidence-uploader";
 import { AuditTimeline } from "@/components/cases/audit-timeline";
 import { CaseActionBar } from "@/components/cases/case-action-bar";
 import { EffectivenessForm } from "@/components/verification/effectiveness-form";
+import { CasePipelineStepper } from "@/components/cases/case-pipeline-stepper";
 import {
   AlertOctagon,
   ArrowLeft,
@@ -55,10 +56,23 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
   const user = await getSessionUser();
   if (!user) redirect("/login");
 
-  const membership = await prisma.membership.findFirst({
-    where: { userId: user.id, isActive: true },
-    include: { tenant: true },
-  });
+  // Fast-path membership resolution
+  let membership: any = null;
+  if (user.tenantId && user.role && user.tenantName) {
+    membership = {
+      id: `token-${user.id}`,
+      tenantId: user.tenantId,
+      userId: user.id,
+      role: user.role,
+      isActive: true,
+      tenant: { name: user.tenantName, slug: user.tenantSlug || "workspace" },
+    };
+  } else {
+    membership = await prisma.membership.findFirst({
+      where: { userId: user.id, isActive: true },
+      include: { tenant: true },
+    });
+  }
 
   if (!membership) redirect("/login");
 
@@ -81,17 +95,22 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
   let tenantMembers: Array<any> = [];
 
   try {
-    qc = await CaseService.getCase(tenantContext, caseId);
-    tenantMembers = await prisma.membership.findMany({
-      where: { tenantId: membership.tenantId, isActive: true },
-      include: { user: { select: { id: true, displayName: true, email: true } } },
-    });
+    const [fetchedCase, members] = await Promise.all([
+      CaseService.getCase(tenantContext, caseId),
+      prisma.membership.findMany({
+        where: { tenantId: membership.tenantId, isActive: true },
+        include: { user: { select: { id: true, displayName: true, email: true } } },
+      }),
+    ]);
+    qc = fetchedCase;
+    tenantMembers = members;
   } catch (err) {
     console.error("Error retrieving case:", err);
     notFound();
   }
 
   const isQE = membership.role === "QUALITY_ENGINEER" || membership.role === "TENANT_ADMIN";
+  const isActionOwner = membership.role === "ACTION_OWNER";
   const sev = SEVERITY_CONFIG[qc.severity as Severity] || SEVERITY_CONFIG.MEDIUM;
   const SevIcon = sev.icon;
 
@@ -110,6 +129,7 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
     id: m.user.id,
     displayName: m.user.displayName,
     email: m.user.email,
+    role: m.role,
   }));
 
   return (
@@ -154,7 +174,7 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
             <CaseStatusBadge status={qc.status} size="sm" />
           </div>
 
-          <div className="text-xs font-mono flex items-center gap-1" style={{ color: "var(--fl-text-muted)" }}>
+          <div suppressHydrationWarning className="text-xs font-mono flex items-center gap-1" style={{ color: "var(--fl-text-muted)" }}>
             <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
             Reported {new Date(qc.createdAt).toLocaleDateString()}
           </div>
@@ -201,7 +221,7 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
           >
             <div>
               <span style={{ color: "var(--fl-text-muted)" }}>Observed:</span>{" "}
-              <strong style={{ color: "var(--fl-danger)" }}>{qc.observedValue} {qc.unit}</strong>
+              <strong style={{ color: "var(--fl-danger)" }}>{qc.observedValue != null ? String(qc.observedValue) : ""} {qc.unit}</strong>
             </div>
             <div>
               <span style={{ color: "var(--fl-text-muted)" }}>Specification:</span>{" "}
@@ -232,6 +252,16 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
           />
         </div>
       </div>
+
+      {/* Visual Workflow Pipeline Stepper */}
+      <CasePipelineStepper
+        status={qc.status}
+        hasConfirmedFinding={qc.findings.some((f: any) => f.kind === "CONFIRMED")}
+        actionsCount={qc.actions.length}
+        completedActionsCount={qc.actions.filter((a: any) => a.status === "COMPLETED").length}
+        hasEffectivenessPass={qc.effectivenessChecks.some((e: any) => e.outcome === "EFFECTIVE")}
+        userRole={membership.role}
+      />
 
       {/* Main Investigation & Action Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -271,6 +301,7 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
             availableEvidence={evidenceOptions}
             assignees={memberOptions}
             isQualityEngineer={isQE}
+            isActionOwner={isActionOwner}
             currentUserId={user.id}
           />
 
@@ -281,6 +312,7 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
                 tenantId={membership.tenantId}
                 caseId={qc.id}
                 availableEvidence={evidenceOptions}
+                isPendingVerification={qc.status === "VERIFICATION_PENDING"}
               />
             )}
 
@@ -313,7 +345,7 @@ export default async function CaseDetailPage({ params }: CaseDetailPageProps) {
                           >
                             {v.outcome}
                           </span>
-                          <span className="text-[11px] font-mono tabular-nums" style={{ color: "var(--fl-text-muted)" }}>
+                          <span suppressHydrationWarning className="text-[11px] font-mono tabular-nums" style={{ color: "var(--fl-text-muted)" }}>
                             {new Date(v.reviewedAt).toLocaleDateString()}
                           </span>
                         </div>

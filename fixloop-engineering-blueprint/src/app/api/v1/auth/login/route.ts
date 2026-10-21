@@ -65,13 +65,25 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const activeMembership = user.memberships.find((m) => m.tenant.isActive);
+
     const sessionUser = {
       id: user.id,
       email: user.email,
       displayName: user.displayName,
+      tenantId: activeMembership?.tenantId,
+      role: activeMembership?.role,
+      tenantName: activeMembership?.tenant.name,
+      tenantSlug: activeMembership?.tenant.slug,
     };
 
-    const token = await createSessionToken(sessionUser);
+    const token = await createSessionToken(sessionUser, activeMembership ? {
+      id: activeMembership.id,
+      tenantId: activeMembership.tenantId,
+      role: activeMembership.role,
+      tenantName: activeMembership.tenant.name,
+      tenantSlug: activeMembership.tenant.slug,
+    } : undefined);
 
     const response = NextResponse.json({
       user: sessionUser,

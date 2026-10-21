@@ -230,6 +230,7 @@ export default async function CasesPage({ searchParams }: CasesPageProps) {
                       {qc.caseNumber}
                     </span>
                     <span
+                      suppressHydrationWarning
                       className="text-[11px] font-mono block mt-0.5 flex items-center gap-1"
                       style={{ color: "var(--fl-text-muted)" }}
                     >

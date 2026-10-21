@@ -43,6 +43,7 @@ interface ActionCardProps {
   action: ActionItem;
   availableEvidence: Array<{ id: string; originalFilename: string; caption?: string | null }>;
   isCurrentAssigneeOrQE: boolean;
+  isActionOwner?: boolean;
   onCompleted?: () => void;
 }
 
@@ -52,17 +53,89 @@ export function ActionCard({
   action,
   availableEvidence,
   isCurrentAssigneeOrQE,
+  isActionOwner = false,
   onCompleted,
 }: ActionCardProps) {
   const [showCompleteForm, setShowCompleteForm] = useState(false);
   const [completionNote, setCompletionNote] = useState("");
-  const [proofEvidenceId, setProofEvidenceId] = useState(availableEvidence[0]?.id || "");
+  const [proofEvidenceId, setProofEvidenceId] = useState("");
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+  const [isUploadingProof, setIsUploadingProof] = useState(false);
   const [waiverReason, setWaiverReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  const canComplete = isCurrentAssigneeOrQE || isActionOwner;
   const isCompleted = action.status === "COMPLETED";
   const isOverdue = !isCompleted && new Date(action.dueAt) < new Date();
+
+  const handleProofFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    let resolvedFileType = file.type;
+    if (!resolvedFileType) {
+      const ext = file.name.split(".").pop()?.toLowerCase();
+      if (ext === "jpg" || ext === "jpeg") resolvedFileType = "image/jpeg";
+      else if (ext === "png") resolvedFileType = "image/png";
+      else if (ext === "webp") resolvedFileType = "image/webp";
+      else if (ext === "pdf") resolvedFileType = "application/pdf";
+      else if (ext === "csv") resolvedFileType = "text/csv";
+    }
+
+    setIsUploadingProof(true);
+    setErrorMessage(null);
+
+    try {
+      // Step 1: Upload Intent
+      const intentRes = await fetch(
+        `/api/v1/tenants/${tenantId}/cases/${caseId}/evidence/upload-intents`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fileName: file.name,
+            fileType: resolvedFileType || "application/octet-stream",
+            fileSize: file.size,
+            evidenceType: "ACTION_PROOF",
+            caption: `Proof for action: ${action.description.substring(0, 40)}`,
+          }),
+        }
+      );
+      const intentData = await intentRes.json();
+      if (!intentRes.ok) throw new Error(intentData.error?.message || "Failed to initialize proof upload");
+
+      const evId = intentData.evidence?.id || intentData.evidenceId;
+      const uploadUrl = intentData.uploadUrl;
+
+      // Step 2: PUT raw bytes
+      const arrayBuffer = await file.arrayBuffer();
+      const transferRes = await fetch(uploadUrl, {
+        method: "PUT",
+        headers: { "Content-Type": resolvedFileType || "application/octet-stream" },
+        body: arrayBuffer,
+      });
+      if (!transferRes.ok) throw new Error("Failed to transfer proof file bytes");
+
+      // Step 3: Finalize
+      const finRes = await fetch(
+        `/api/v1/tenants/${tenantId}/evidence/${evId}/finalize`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({}),
+        }
+      );
+      if (!finRes.ok) throw new Error("Failed to finalize proof evidence");
+
+      setProofEvidenceId(evId);
+      setUploadedFileName(file.name);
+    } catch (err: any) {
+      setErrorMessage(err.message || "Failed to upload proof file");
+    } finally {
+      setIsUploadingProof(false);
+    }
+  };
 
   const handleComplete = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,7 +146,7 @@ export function ActionCard({
 
     const hasProof = Boolean(proofEvidenceId);
     const finalWaiver = !hasProof
-      ? (waiverReason.trim() || `Verified on machine without separate file upload: ${completionNote.trim()}`)
+      ? (waiverReason.trim() || `Verified on machine floor by action verifier: ${completionNote.trim()}`)
       : undefined;
 
     if (!hasProof && finalWaiver && finalWaiver.length < 10) {
@@ -109,6 +182,7 @@ export function ActionCard({
       setShowCompleteForm(false);
       setCompletionNote("");
       setWaiverReason("");
+      setUploadedFileName(null);
       if (onCompleted) onCompleted();
     } catch (err: any) {
       setErrorMessage(err.message || "Failed to complete action");
@@ -158,7 +232,7 @@ export function ActionCard({
 
         <div className="flex items-center gap-2 text-xs font-mono">
           <Clock className={`h-3.5 w-3.5 ${isOverdue ? "text-[#B42318]" : "text-slate-400"}`} />
-          <span className={isOverdue ? "text-[#B42318] font-bold" : "text-[#526173]"}>
+          <span suppressHydrationWarning className={isOverdue ? "text-[#B42318] font-bold" : "text-[#526173]"}>
             Due {new Date(action.dueAt).toLocaleDateString()}
           </span>
         </div>
@@ -174,7 +248,7 @@ export function ActionCard({
           <span>Assigned to: <strong className="text-[#17212F]">{action.assignee.displayName || action.assignee.email}</strong></span>
         </div>
 
-        {!isCompleted && isCurrentAssigneeOrQE && (
+        {!isCompleted && canComplete && (
           <button
             onClick={() => setShowCompleteForm(!showCompleteForm)}
             className="px-3 py-1.5 rounded-lg bg-[#E7EFF7] hover:bg-blue-100 text-[#2F5F91] font-semibold border border-blue-200 flex items-center gap-1.5 transition-colors text-xs"
@@ -189,7 +263,7 @@ export function ActionCard({
       {/* Completion Details if Completed */}
       {isCompleted && (
         <div className="mt-3 p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-xs space-y-1">
-          <div className="text-[#216E4A] font-semibold flex items-center gap-1">
+          <div suppressHydrationWarning className="text-[#216E4A] font-semibold flex items-center gap-1">
             <CheckCircle2 className="h-3.5 w-3.5" />
             Completed by {action.completedBy?.displayName || action.completedBy?.email} on {new Date(action.completedAt!).toLocaleDateString()}
           </div>
@@ -208,9 +282,12 @@ export function ActionCard({
       {/* Complete Form Modal / Inline */}
       {showCompleteForm && (
         <form onSubmit={handleComplete} className="mt-4 p-4 rounded-xl bg-[#F7F9FC] border border-[#D8E0E9] space-y-3">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-[#2F5F91]">
-            Submit Completion & Physical Proof
-          </h4>
+          <div className="flex items-center justify-between">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-[#2F5F91]">
+              Submit Completion &amp; Physical Proof
+            </h4>
+            <span className="text-[10px] font-mono text-[#526173]">Action Verifier Gate</span>
+          </div>
 
           {errorMessage && (
             <div className="p-2.5 rounded-lg bg-red-50 border border-red-200 text-xs text-[#B42318] flex items-center gap-2">
@@ -227,46 +304,102 @@ export function ActionCard({
               rows={2}
               value={completionNote}
               onChange={(e) => setCompletionNote(e.target.value)}
-              placeholder="State what corrective action was applied and verified on machine..."
-              disabled={isSubmitting}
+              placeholder="State what corrective action was applied and verified on machine floor..."
+              disabled={isSubmitting || isUploadingProof}
               className="w-full px-3 py-2 rounded-xl bg-white border border-[#D8E0E9] text-xs text-[#17212F] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#2F5F91]"
             />
           </div>
 
-          <div>
-            <label className="block text-[11px] font-semibold text-[#526173] uppercase tracking-wider mb-1">
-              Attach Proof Evidence (Photo / CMM Report)
-            </label>
-            <select
-              value={proofEvidenceId}
-              onChange={(e) => setProofEvidenceId(e.target.value)}
-              disabled={isSubmitting}
-              className="w-full px-3 py-2 rounded-xl bg-white border border-[#D8E0E9] text-xs text-[#17212F] focus:outline-none focus:ring-2 focus:ring-[#2F5F91]"
-            >
-              <option value="">No separate file / verified via note</option>
-              {availableEvidence.map((ev) => (
-                <option key={ev.id} value={ev.id}>
-                  {ev.originalFilename} {ev.caption ? `(${ev.caption})` : ""}
-                </option>
-              ))}
-            </select>
+          {/* Proof Evidence Section with Direct Upload */}
+          <div className="p-3 rounded-xl bg-white border border-[#D8E0E9] space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-[11px] font-semibold text-[#526173] uppercase tracking-wider">
+                Proof Evidence (Photo / CMM / Inspection Report)
+              </label>
+              {isUploadingProof && (
+                <span className="text-[11px] text-[#2F5F91] flex items-center gap-1 font-mono">
+                  <Loader2 className="h-3 w-3 animate-spin" /> Uploading proof...
+                </span>
+              )}
+            </div>
+
+            {uploadedFileName ? (
+              <div className="p-2 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-between text-xs text-[#216E4A]">
+                <div className="flex items-center gap-1.5 font-semibold">
+                  <FileCheck className="h-4 w-4" />
+                  <span>Attached: {uploadedFileName}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProofEvidenceId("");
+                    setUploadedFileName(null);
+                  }}
+                  className="text-[11px] text-[#B42318] hover:underline"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <label className="px-3 py-1.5 rounded-lg bg-[#E7EFF7] hover:bg-blue-100 text-[#2F5F91] border border-blue-200 text-xs font-semibold cursor-pointer flex items-center gap-1.5 transition-colors">
+                    <FileCheck className="h-3.5 w-3.5" />
+                    Upload Proof File
+                    <input
+                      type="file"
+                      className="hidden"
+                      onChange={handleProofFileUpload}
+                      disabled={isSubmitting || isUploadingProof}
+                      accept="image/*,application/pdf,text/csv"
+                    />
+                  </label>
+                  <span className="text-[11px] text-slate-400">or choose from case evidence:</span>
+                </div>
+
+                {availableEvidence.length > 0 && (
+                  <select
+                    value={proofEvidenceId}
+                    onChange={(e) => setProofEvidenceId(e.target.value)}
+                    disabled={isSubmitting || isUploadingProof}
+                    className="w-full px-3 py-1.5 rounded-lg bg-slate-50 border border-[#D8E0E9] text-xs text-[#17212F] focus:outline-none focus:ring-2 focus:ring-[#2F5F91]"
+                  >
+                    <option value="">No existing file selected</option>
+                    {availableEvidence.map((ev) => (
+                      <option key={ev.id} value={ev.id}>
+                        {ev.originalFilename} {ev.caption ? `(${ev.caption})` : ""}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            )}
           </div>
 
           {!proofEvidenceId && (
             <div>
-              <label className="block text-[11px] font-semibold text-[#526173] uppercase tracking-wider mb-1">
-                Audited Waiver Rationale (Optional if note is descriptive)
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-[11px] font-semibold text-[#526173] uppercase tracking-wider">
+                  Audited Waiver Rationale (If no separate proof file)
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setWaiverReason("Physical fix inspected and verified directly on machine cell tooling")}
+                  className="text-[10px] text-[#2F5F91] hover:underline font-mono"
+                >
+                  Fill standard waiver
+                </button>
+              </div>
               <input
                 type="text"
                 value={waiverReason}
                 onChange={(e) => setWaiverReason(e.target.value)}
                 placeholder="Reason why physical proof is waived for this action (min 10 chars)..."
-                disabled={isSubmitting}
+                disabled={isSubmitting || isUploadingProof}
                 className="w-full px-3 py-2 rounded-xl bg-white border border-[#D8E0E9] text-xs text-[#17212F] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#2F5F91]"
               />
               <p className="text-[10px] text-[#526173] mt-1">
-                If no file is attached, an audited waiver is logged to the immutable case history.
+                Per quality rules, completed actions must have either an attached file or an audited waiver rationale.
               </p>
             </div>
           )}
@@ -275,14 +408,14 @@ export function ActionCard({
             <button
               type="button"
               onClick={() => setShowCompleteForm(false)}
-              disabled={isSubmitting}
+              disabled={isSubmitting || isUploadingProof}
               className="px-3 py-1.5 rounded-lg border border-[#D8E0E9] text-xs text-[#526173] hover:text-[#17212F] bg-white hover:bg-slate-50 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
-              disabled={isSubmitting || !completionNote.trim()}
+              disabled={isSubmitting || isUploadingProof || !completionNote.trim()}
               className="px-4 py-1.5 rounded-lg bg-[#2F5F91] hover:bg-[#214B78] text-white text-xs font-semibold shadow-sm flex items-center gap-1.5 transition-colors"
             >
               {isSubmitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}

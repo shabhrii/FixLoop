@@ -9,6 +9,10 @@ export interface SessionUser {
   id: string;
   email: string;
   displayName: string | null;
+  tenantId?: string;
+  role?: TenantRole;
+  tenantName?: string;
+  tenantSlug?: string;
 }
 
 export interface TenantMembership {

@@ -10,6 +10,7 @@ interface AssigneeOption {
   id: string;
   displayName: string | null;
   email: string;
+  role?: string;
 }
 
 interface EvidenceOption {
@@ -25,6 +26,7 @@ interface CaseActionsSectionProps {
   availableEvidence: EvidenceOption[];
   assignees: AssigneeOption[];
   isQualityEngineer: boolean;
+  isActionOwner?: boolean;
   currentUserId: string;
 }
 
@@ -35,6 +37,7 @@ export function CaseActionsSection({
   availableEvidence,
   assignees,
   isQualityEngineer,
+  isActionOwner = false,
   currentUserId,
 }: CaseActionsSectionProps) {
   const router = useRouter();
@@ -98,6 +101,7 @@ export function CaseActionsSection({
               action={action}
               availableEvidence={availableEvidence}
               isCurrentAssigneeOrQE={isQualityEngineer || action.assigneeId === currentUserId}
+              isActionOwner={isActionOwner}
               onCompleted={() => router.refresh()}
             />
           ))

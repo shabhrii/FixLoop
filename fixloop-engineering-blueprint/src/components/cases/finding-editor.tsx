@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { CheckCircle2, Plus, FileText, Check, AlertCircle, Loader2 } from "lucide-react";
 import { FindingKind } from "@prisma/client";
 
@@ -39,6 +40,7 @@ export function FindingEditor({
   isQualityEngineer,
   onRefresh,
 }: FindingEditorProps) {
+  const router = useRouter();
   // New Finding state
   const [statement, setStatement] = useState("");
   const [kind, setKind] = useState<FindingKind>("FACT");
@@ -81,6 +83,7 @@ export function FindingEditor({
       setStatement("");
       setSelectedEvidenceIds([]);
       setSuccessMessage("Finding successfully recorded.");
+      router.refresh();
       if (onRefresh) onRefresh();
     } catch (err: any) {
       setErrorMessage(err.message || "Failed to create finding");
@@ -117,6 +120,7 @@ export function FindingEditor({
       setConfirmingFindingId(null);
       setConfirmRationale("");
       setSuccessMessage("Confirmed root cause recorded with human engineer authorization.");
+      router.refresh();
       if (onRefresh) onRefresh();
     } catch (err: any) {
       setErrorMessage(err.message || "Failed to confirm root cause");

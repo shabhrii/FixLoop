@@ -25,7 +25,7 @@ export const Policy = {
   },
 
   canCompleteAction(role: TenantRole, assigneeId: string, currentUserId: string): boolean {
-    if (role === "QUALITY_ENGINEER" || role === "TENANT_ADMIN") return true;
+    if (role === "QUALITY_ENGINEER" || role === "TENANT_ADMIN" || role === "ACTION_OWNER") return true;
     return assigneeId === currentUserId;
   },
 

@@ -152,7 +152,7 @@ export default async function ActionsQueuePage({ searchParams }: ActionsPageProp
 
                   <div className="flex items-center gap-2 text-xs font-mono">
                     <Clock className={`h-3.5 w-3.5 ${isOverdue ? "text-[#B42318]" : "text-slate-400"}`} />
-                    <span className={isOverdue ? "text-[#B42318] font-bold" : "text-[#526173]"}>
+                    <span suppressHydrationWarning className={isOverdue ? "text-[#B42318] font-bold" : "text-[#526173]"}>
                       Due {new Date(a.dueAt).toLocaleDateString()}
                     </span>
                   </div>
@@ -175,13 +175,24 @@ export default async function ActionsQueuePage({ searchParams }: ActionsPageProp
                     )}
                   </div>
 
-                  <Link
-                    href={`/app/cases/${a.case.id}`}
-                    className="text-xs font-semibold text-[#2F5F91] hover:text-[#214B78] flex items-center gap-1"
-                  >
-                    Open Case Details
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </Link>
+                  <div className="flex items-center gap-2.5">
+                    {!isCompleted && (
+                      <Link
+                        href={`/app/cases/${a.case.id}`}
+                        className="px-3 py-1.5 rounded-lg bg-[#E7EFF7] hover:bg-blue-100 text-[#2F5F91] border border-blue-200 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                      >
+                        <CheckSquare className="h-3.5 w-3.5" />
+                        Complete Task &amp; Attach Proof
+                      </Link>
+                    )}
+                    <Link
+                      href={`/app/cases/${a.case.id}`}
+                      className="text-xs font-semibold text-[#526173] hover:text-[#17212F] flex items-center gap-1"
+                    >
+                      Case Details
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
+                  </div>
                 </div>
               </div>
             );

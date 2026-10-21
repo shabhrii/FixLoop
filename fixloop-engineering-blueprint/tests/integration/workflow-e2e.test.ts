@@ -61,13 +61,13 @@ describe("End-to-End Defect-to-Verified-Closure Flow", () => {
         id: "mem-ao",
         tenantId: tenant.id,
         userId: actionUser.id,
-        role: "OPERATOR",
+        role: "ACTION_OWNER",
         isActive: true,
         tenantName: tenant.name,
         tenantSlug: tenant.slug,
       },
       tenantId: tenant.id,
-      role: "OPERATOR",
+      role: "ACTION_OWNER",
     };
   });
 

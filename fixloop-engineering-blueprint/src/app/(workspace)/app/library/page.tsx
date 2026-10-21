@@ -132,7 +132,7 @@ export default async function KnowledgeLibraryPage({ searchParams }: LibraryPage
 
                 <div className="flex items-center gap-2 text-xs font-mono text-[#216E4A]">
                   <ShieldCheck className="h-3.5 w-3.5" />
-                  <span>Closed {qc.closedAt ? new Date(qc.closedAt).toLocaleDateString() : ""}</span>
+                  <span suppressHydrationWarning>Closed {qc.closedAt ? new Date(qc.closedAt).toLocaleDateString() : ""}</span>
                 </div>
               </div>
 

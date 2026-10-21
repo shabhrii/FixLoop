@@ -8,6 +8,7 @@ interface UserOption {
   id: string;
   displayName: string | null;
   email: string;
+  role?: string;
 }
 
 interface ActionEditorProps {
@@ -29,7 +30,9 @@ export function ActionEditor({
 }: ActionEditorProps) {
   const [actionType, setActionType] = useState<ActionType>("CONTAINMENT");
   const [description, setDescription] = useState("");
-  const [assigneeId, setAssigneeId] = useState(assignees[0]?.id || "");
+  // Prefer member with ACTION_OWNER role by default
+  const defaultAssignee = assignees.find((a) => a.role === "ACTION_OWNER") || assignees[0];
+  const [assigneeId, setAssigneeId] = useState(defaultAssignee?.id || "");
   const [dueDays, setDueDays] = useState("3");
   const [isRequired, setIsRequired] = useState(true);
 
@@ -150,7 +153,7 @@ export function ActionEditor({
               >
                 {assignees.map((a) => (
                   <option key={a.id} value={a.id}>
-                    {a.displayName || a.email}
+                    {a.displayName || a.email} {a.role ? `[${a.role.replace(/_/g, " ")}]` : ""}
                   </option>
                 ))}
               </select>

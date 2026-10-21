@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { CheckCircle, AlertCircle, Loader2, ShieldCheck, FileCheck } from "lucide-react";
 import { EffectivenessOutcome } from "@prisma/client";
 
@@ -14,6 +15,7 @@ interface EffectivenessFormProps {
   tenantId: string;
   caseId: string;
   availableEvidence: EvidenceOption[];
+  isPendingVerification?: boolean;
   onRecorded?: () => void;
 }
 
@@ -21,9 +23,13 @@ export function EffectivenessForm({
   tenantId,
   caseId,
   availableEvidence,
+  isPendingVerification = false,
   onRecorded,
 }: EffectivenessFormProps) {
-  const [criterion, setCriterion] = useState("");
+  const router = useRouter();
+  const [criterion, setCriterion] = useState(
+    isPendingVerification ? "Zero dimensional runout across next 30 consecutive machined parts" : ""
+  );
   const [sampleSize, setSampleSize] = useState("30");
   const [outOfToleranceCount, setOutOfToleranceCount] = useState("0");
   const [outcome, setOutcome] = useState<EffectivenessOutcome>("EFFECTIVE");
@@ -80,6 +86,7 @@ export function EffectivenessForm({
       setSuccessMessage("Effectiveness evaluation recorded. Closure guard updated.");
       setCriterion("");
       setNotes("");
+      router.refresh();
       if (onRecorded) onRecorded();
     } catch (err: any) {
       setErrorMessage(err.message || "Failed to record effectiveness check");
@@ -89,7 +96,27 @@ export function EffectivenessForm({
   };
 
   return (
-    <div className="p-6 rounded-2xl bg-white border border-[#D8E0E9] shadow-sm space-y-4">
+    <div
+      id="section-effectiveness-form"
+      className={`p-6 rounded-2xl bg-white shadow-sm space-y-4 transition-all ${
+        isPendingVerification
+          ? "border-2 border-indigo-400 ring-4 ring-indigo-50/80 shadow-md"
+          : "border border-[#D8E0E9]"
+      }`}
+    >
+      {isPendingVerification && (
+        <div className="p-3 rounded-xl bg-indigo-50 border border-indigo-200 text-xs text-[#3730A3] flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-200/70 text-[10px] font-mono">
+              Next Step in Pipeline
+            </span>
+            <span>
+              All remediation actions completed by verifier! Record effectiveness below to unlock case closure.
+            </span>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center gap-2.5">
         <div className="p-2.5 rounded-xl bg-emerald-50 text-[#216E4A]">
           <ShieldCheck className="h-5 w-5" />

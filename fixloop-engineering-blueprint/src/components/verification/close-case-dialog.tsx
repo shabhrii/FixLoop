@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Lock,
   CheckCircle2,
@@ -60,6 +60,35 @@ export function CloseCaseDialog({
   const [isClosing, setIsClosing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  const [liveFindings, setLiveFindings] = useState(findings);
+  const [liveActions, setLiveActions] = useState(actions);
+  const [liveEffectiveness, setLiveEffectiveness] = useState(latestEffectiveness);
+  const [liveVersion, setLiveVersion] = useState(caseVersion);
+
+  // Sync with latest server state when modal opens
+  useEffect(() => {
+    if (!isOpen) return;
+    setLiveFindings(findings);
+    setLiveActions(actions);
+    setLiveEffectiveness(latestEffectiveness);
+    setLiveVersion(caseVersion);
+
+    fetch(`/api/v1/tenants/${tenantId}/cases/${caseId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.data) {
+          const c = data.data;
+          if (c.findings) setLiveFindings(c.findings);
+          if (c.actions) setLiveActions(c.actions);
+          if (c.effectivenessChecks) {
+            setLiveEffectiveness(c.effectivenessChecks[0] || null);
+          }
+          if (c.version) setLiveVersion(c.version);
+        }
+      })
+      .catch((err) => console.error("Error refreshing case dialog state:", err));
+  }, [isOpen, tenantId, caseId, findings, actions, latestEffectiveness, caseVersion]);
+
   if (!isOpen) return null;
 
   // Evaluate closure invariants locally for immediate user feedback
@@ -69,20 +98,20 @@ export function CloseCaseDialog({
     blockingReasons.push("Only Quality Engineers or Admins have authority to close cases.");
   }
 
-  const hasConfirmedRootCause = findings.some((f) => f.kind === "CONFIRMED");
+  const hasConfirmedRootCause = liveFindings.some((f) => f.kind === "CONFIRMED");
   if (!hasConfirmedRootCause) {
     blockingReasons.push("Missing confirmed root cause. At least one finding must be explicitly confirmed by an engineer.");
   }
 
-  const incompleteActions = actions.filter((a) => a.isRequired && a.status !== "COMPLETED");
+  const incompleteActions = liveActions.filter((a) => a.isRequired && a.status !== "COMPLETED");
   if (incompleteActions.length > 0) {
     blockingReasons.push(`${incompleteActions.length} required action task(s) are not yet marked COMPLETED with proof.`);
   }
 
-  if (!latestEffectiveness) {
+  if (!liveEffectiveness) {
     blockingReasons.push("No statistical effectiveness check has been recorded.");
-  } else if (latestEffectiveness.outcome !== "EFFECTIVE") {
-    blockingReasons.push(`Latest effectiveness check is '${latestEffectiveness.outcome}'. Case closure requires an EFFECTIVE outcome.`);
+  } else if (liveEffectiveness.outcome !== "EFFECTIVE") {
+    blockingReasons.push(`Latest effectiveness check is '${liveEffectiveness.outcome}'. Case closure requires an EFFECTIVE outcome.`);
   }
 
   const canClose = blockingReasons.length === 0;
@@ -99,7 +128,7 @@ export function CloseCaseDialog({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          expectedVersion: caseVersion,
+          expectedVersion: liveVersion,
           notes: notes.trim() || undefined,
         }),
       });
@@ -161,6 +190,19 @@ export function CloseCaseDialog({
                 </li>
               ))}
             </ul>
+            {!latestEffectiveness && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  const el = document.getElementById("section-effectiveness-form");
+                  if (el) el.scrollIntoView({ behavior: "smooth" });
+                }}
+                className="mt-2 px-3.5 py-1.5 rounded-lg bg-[#2F5F91] hover:bg-[#214B78] text-white text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              >
+                Go to Effectiveness Verification Form &darr;
+              </button>
+            )}
           </div>
         ) : (
           <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center gap-2.5 text-xs text-[#216E4A]">

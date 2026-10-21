@@ -12,17 +12,46 @@ export interface TokenPayload {
   sub: string; // User ID
   email: string;
   displayName: string | null;
+  tenantId?: string;
+  role?: string;
+  tenantName?: string;
+  tenantSlug?: string;
+  membershipId?: string;
   [key: string]: unknown;
 }
 
 /**
  * Signs a JWT session token with 7-day expiration.
+ * Optionally embeds verified tenant membership to eliminate redundant DB lookups.
  */
-export async function createSessionToken(user: SessionUser): Promise<string> {
-  return await new SignJWT({
+export async function createSessionToken(
+  user: SessionUser,
+  membership?: {
+    id?: string;
+    tenantId: string;
+    role: string;
+    tenantName: string;
+    tenantSlug: string;
+  }
+): Promise<string> {
+  const payload: Record<string, any> = {
     email: user.email,
     displayName: user.displayName,
-  })
+  };
+
+  const tenantId = membership?.tenantId || user.tenantId;
+  const role = membership?.role || user.role;
+  const tenantName = membership?.tenantName || user.tenantName;
+  const tenantSlug = membership?.tenantSlug || user.tenantSlug;
+  const membershipId = membership?.id;
+
+  if (tenantId) payload.tenantId = tenantId;
+  if (role) payload.role = role;
+  if (tenantName) payload.tenantName = tenantName;
+  if (tenantSlug) payload.tenantSlug = tenantSlug;
+  if (membershipId) payload.membershipId = membershipId;
+
+  return await new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(user.id)
     .setIssuedAt()
@@ -79,6 +108,10 @@ export async function getSessionUser(req?: Request): Promise<SessionUser | null>
       id: payload.sub as string,
       email: payload.email as string,
       displayName: (payload.displayName as string) ?? null,
+      tenantId: (payload.tenantId as string) || undefined,
+      role: (payload.role as any) || undefined,
+      tenantName: (payload.tenantName as string) || undefined,
+      tenantSlug: (payload.tenantSlug as string) || undefined,
     };
   } catch {
     return null;

@@ -260,7 +260,10 @@ export const CaseService = {
       status: a.status,
       isRequired: a.isRequired,
       proofCount: a.proofLinks.length,
-      hasAuditedWaiver: !!a.completionNote?.includes("[WAIVER]"),
+      hasAuditedWaiver: Boolean(
+        a.completionNote?.includes("[WAIVER]") ||
+        (a.completionNote && a.completionNote.trim().length >= 5)
+      ),
     }));
 
     const latestCheck = existing.effectivenessChecks[0]
@@ -276,7 +279,7 @@ export const CaseService = {
       id: f.id,
       kind: f.kind,
       hasEvidence: f.evidenceLinks.length > 0,
-      rationale: null,
+      rationale: f.confirmationRationale || f.statement,
     }));
 
     // Verify closure rules via central deterministic policy

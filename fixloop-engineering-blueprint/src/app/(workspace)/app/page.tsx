@@ -30,39 +30,25 @@ export default async function DashboardPage() {
   let recentCases: Array<any> = [];
 
   try {
-    const membership = await prisma.membership.findFirst({
-      where: { userId: user?.id, isActive: true },
-    });
+    const tenantId = user?.tenantId || (
+      await prisma.membership.findFirst({
+        where: { userId: user?.id, isActive: true },
+        select: { tenantId: true },
+      })
+    )?.tenantId;
 
-    if (membership) {
-      const tenantId = membership.tenantId;
-
-      [
-        openCasesCount,
-        criticalCount,
-        investigatingCount,
-        pendingActionsCount,
-        pendingVerificationCount,
-        closedCasesCount,
-        recentCases,
-      ] = await Promise.all([
-        prisma.qualityCase.count({
-          where: { tenantId, status: { notIn: ["CLOSED", "CANCELLED"] } },
+    if (tenantId) {
+      const [statusGroups, criticalRes, actionsRes, casesRes] = await Promise.all([
+        prisma.qualityCase.groupBy({
+          by: ["status"],
+          where: { tenantId },
+          _count: { _all: true },
         }),
         prisma.qualityCase.count({
           where: { tenantId, severity: "CRITICAL", status: { notIn: ["CLOSED", "CANCELLED"] } },
         }),
-        prisma.qualityCase.count({
-          where: { tenantId, status: "INVESTIGATING" },
-        }),
         prisma.action.count({
           where: { tenantId, status: { in: ["OPEN", "IN_PROGRESS"] } },
-        }),
-        prisma.qualityCase.count({
-          where: { tenantId, status: "VERIFICATION_PENDING" },
-        }),
-        prisma.qualityCase.count({
-          where: { tenantId, status: "CLOSED" },
         }),
         prisma.qualityCase.findMany({
           where: { tenantId },
@@ -74,6 +60,21 @@ export default async function DashboardPage() {
           },
         }),
       ]);
+
+      recentCases = casesRes;
+      criticalCount = criticalRes;
+      pendingActionsCount = actionsRes;
+
+      for (const group of statusGroups) {
+        const count = group._count._all;
+        if (group.status === "INVESTIGATING") investigatingCount = count;
+        else if (group.status === "VERIFICATION_PENDING") pendingVerificationCount = count;
+        else if (group.status === "CLOSED") closedCasesCount = count;
+
+        if (group.status !== "CLOSED" && group.status !== "CANCELLED") {
+          openCasesCount += count;
+        }
+      }
     }
   } catch (err) {
     console.error("Dashboard metric fetch error:", err);
